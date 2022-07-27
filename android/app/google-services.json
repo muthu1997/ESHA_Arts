@@ -1,0 +1,39 @@
+{
+  "project_info": {
+    "project_number": "210348173854",
+    "project_id": "gym-coach-92e3d",
+    "storage_bucket": "gym-coach-92e3d.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:210348173854:android:f47af85e4a898ebece1c0f",
+        "android_client_info": {
+          "package_name": "com.gymcoach.mobile"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "210348173854-o2m7v7soant3jik9ogsn8np06l228oer.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDJHj1Es2SWi9H7QlC0Rww_3vvPVIn1daw"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "210348173854-o2m7v7soant3jik9ogsn8np06l228oer.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

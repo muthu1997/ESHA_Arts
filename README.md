@@ -1,2 +1,2 @@
-# ESHA_Arts
- React native app Tanjore gallery
+# PHOENIX_Fitness
+ React native app for phoenix fitness

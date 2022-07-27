@@ -1,2 +1,2 @@
 # PHOENIX_Fitness
- React native app for phoenix fitness
+ React native app for Esha arts gallery promotion

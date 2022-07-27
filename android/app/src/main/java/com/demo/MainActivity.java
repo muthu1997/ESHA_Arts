@@ -1,4 +1,4 @@
-package com.gymcoach.mobile;
+package com.esha.mobile;
 import android.os.Bundle;
 import com.facebook.react.ReactActivity;
 import org.devio.rn.splashscreen.SplashScreen;

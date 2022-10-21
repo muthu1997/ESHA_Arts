@@ -17,8 +17,8 @@ const PaymentMethod = props => {
                         <Image source={icon} style={styles.icon} />
                     </View>
                     <View>
-                        <Text title={title} type="label" />
-                        <Text title={description} type="label" lines={1} style={{ fontSize: 12, color: COLOUR.GRAY }} />
+                        <Text title={title} type="ROBOTO_MEDIUM" />
+                        <Text title={description} type="ROBOTO_MEDIUM" lines={1} style={{ fontSize: 12, color: COLOUR.GRAY }} />
                     </View>
                 </View>
                     <RadioButton

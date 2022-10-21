@@ -43,7 +43,7 @@ const cartButton = () => {
             <Icon name="minus" color={COLOUR.PRIMARY} />
         </TouchableOpacity>
         <View style={[styles.smallButton, { backgroundColor: COLOUR.CARD_BG }]}>
-            <Text type="label" title={1} style={{ color: COLOUR.PRIMARY }} />
+            <Text type="ROBOTO_MEDIUM" title={1} style={{ color: COLOUR.PRIMARY }} />
         </View>
         <TouchableOpacity activeOpacity={0.8} style={styles.smallButton}>
             <Icon name="plus" color={COLOUR.PRIMARY} />
@@ -63,21 +63,21 @@ const ServiceCategoryList = props => {
                                 <Image source={item.icon} resizeMode="contain" style={{ width: "80%", height: "80%" }} />
                             </View>
                             <View style={styles.detailsContainer}>
-                                <Text type="heading" title={item.title} />
-                                <Text type="paragraph" title={`${item.description}`} style={{ color: COLOUR.GRAY }} />
+                                <Text type="ROBO_BOLD" title={item.title} />
+                                <Text type="ROBO_REGULAR" title={`${item.description}`} style={{ color: COLOUR.GRAY }} />
                                 <View style={styles.amountContainer}>
-                                    <Text type="heading" title={`₹ ${item.amount}`} style={{color: COLOUR.DARK_BLUE}} />
+                                    <Text type="ROBO_BOLD" title={`₹ ${item.amount}`} style={{color: COLOUR.DARK_BLUE}} />
                                     {cartButton()}
                                 </View>
-                                <Text type="label" title={'Number of device: 1'} style={{ fontSize: 12 }} />
+                                <Text type="ROBOTO_MEDIUM" title={'Number of device: 1'} style={{ fontSize: 12 }} />
                             </View>
                         </TouchableOpacity>
                     }} />
             </View>
             <View style={{ width: "100%", height: 75, paddingHorizontal: 20, flexDirection: "row", alignItems: "center", justifyContent: "space-between" }}>
                 <View>
-                    <Text type="heading" title={`Total Amount`} />
-                    <Text type="heading" title={`₹ 1200`} style={{ color: COLOUR.PRIMARY }} />
+                    <Text type="ROBO_BOLD" title={`Total Amount`} />
+                    <Text type="ROBO_BOLD" title={`₹ 1200`} style={{ color: COLOUR.PRIMARY }} />
                 </View>
                 <Button title="Continue" style={{ width: "50%" }} onPress={() => props.onSubmit()} />
             </View>

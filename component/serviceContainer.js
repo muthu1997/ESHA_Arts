@@ -37,7 +37,7 @@ const DashboardOrder = props => {
                 numColumns={2}
                 renderItem={({ item, index }) => {
                     return <TouchableOpacity activeOpacity={0.8} onPress={() => props.onNavigate()} style={styles.card}>
-                        <Text type="heading" title={item.title} style={styles.catText} />
+                        <Text type="ROBO_BOLD" title={item.title} style={styles.catText} />
                         <View style={styles.catIcon}>
                             <Image source={item.icon} resizeMode="contain" style={{width: "100%", height: "100%"}} />
                         </View>

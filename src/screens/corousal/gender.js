@@ -39,7 +39,7 @@ export default function Corousal(props) {
             <Image source={technecian} style={styles.mainIcon} resizeMode="contain" />
             </View>
             <Text title="Barani" type="title" />
-            <Text title="Gym Coach" type="paragraph" /> */}
+            <Text title="Gym Coach" type="ROBO_REGULAR" /> */}
         </View>
     )
 }

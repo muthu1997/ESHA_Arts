@@ -42,8 +42,8 @@ const DashboardOrder = props => {
                             <Image source={item.icon} resizeMode="contain" style={{width: "80%", height: "80%"}} />
                         </View>
                         <View style={styles.detailsContainer}>
-                        <Text type="heading" title={item.title} />
-                        <Text type="heading" title={`(${item.id})`} />
+                        <Text type="ROBO_BOLD" title={item.title} />
+                        <Text type="ROBO_BOLD" title={`(${item.id})`} />
                         </View>
                     </TouchableOpacity>
                 }} />

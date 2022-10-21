@@ -11,6 +11,7 @@
    View,
  } from 'react-native';
  import * as COLOUR from "../constants/colors";
+ import Lottie from 'lottie-react-native';
  
  class Button extends React.Component {
     constructor(props) {
@@ -18,8 +19,14 @@
       }
    render() {
      return (
-         <TouchableOpacity onPress={() => this.props.onPress()} style={[styles.button,this.props.style]}>
-             <Text style={[styles.btntxt, this.props.textStyle]}>{this.props.title}</Text>
+         <TouchableOpacity onPress={() => {
+          if(!this.props.loading) {
+            this.props.onPress()
+          }
+          }} style={[styles.button,{backgroundColor: this.props.loading ? COLOUR.WHITE : COLOUR.PRIMARY}, this.props.style]}>
+            {this.props.loading ? 
+            <Lottie source={require('../constants/loader.json')} autoPlay loop style={{width: 50, height: 50}} />
+             : <Text type="ROBOTO_MEDIUM" style={[styles.btntxt, this.props.textStyle]}>{this.props.title}</Text>}
          </TouchableOpacity>
      )
    }
@@ -31,12 +38,10 @@
         height: 50,
         alignItems: 'center',
         justifyContent: 'center',
-        backgroundColor: COLOUR.PRIMARY,
         borderRadius: 10,
         elevation: 3
     },
     btntxt: {
-      fontWeight: '700',
       color: '#FFFF'
     }
  })

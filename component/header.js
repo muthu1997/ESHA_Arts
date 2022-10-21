@@ -10,13 +10,33 @@ const Header = props => {
   return (
     <View style={[styles.headerContainer, props.style]}>
       <View style={{ flexDirection: "row", alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 20, width: "100%" }}>
+        {props.home ? <View style={styles.homeContainer}>
+          <View style={styles.welcomeContainer}>
+                <Text title={`Hi ${props.username}`} type="LOUIS_LIGHT" style={styles.name} />
+                <Text title={props.greetingsMessage} type="LOUIS_LIGHT" style={styles.welcome} />
+            </View>
+          <TouchableOpacity 
+          activeOpacity={0.9}
+          style={styles.profileImageBtn}>
+            <Image 
+            source={require("../assets/images/logo.jpg")}
+            style={styles.profileImage}
+            resizeMode="contain" />
+          </TouchableOpacity>
+        </View> : null}
         {/* header with back button and title */}
         {props.back ?
-          <TouchableOpacity style={styles.backTitleContainer} onPress={() => props.navigation.goBack()}>
+          <TouchableOpacity style={styles.backTitleContainer} onPress={() => props.onGoBack()}>
             <View style={{ flexDirection: "row", alignItems: "center", width: "100%", justifyContent: "flex-start" }}>
               <MIcon name="arrow-left" color={COLOUR.BLACK} size={25} />
               {props.title ?
                 <Text title={props.title} type="title" style={{ fontSize: 22, color:COLOUR.BLACK, marginLeft: 20, textAlign: "center" }} /> : null}
+            </View>
+          </TouchableOpacity> : null}
+          {props.singleTitle ?
+          <TouchableOpacity style={[styles.backTitleContainer]}>
+            <View style={{ alignItems: "center", width: "100%", justifyContent: "center" }}>
+                <Text title={props.singleTitle} type="title" style={{ fontSize: 22, color:COLOUR.BLACK, marginLeft: 20, textAlign: "center" }} />
             </View>
           </TouchableOpacity> : null}
 
@@ -34,14 +54,11 @@ const Header = props => {
 
         {/* search bar with filter button */}
       {props.search ?
-      <View style={{width: "100%", flexDirection: "row", paddingHorizontal: 20, alignItems:"center", justifyContent: "space-around"}}>
-        <TouchableOpacity activeOpacity={0.8} style={[styles.searchButton, { width: props.filter ? "80%" : "90%"}]}>
-          <Icon name="search" color={COLOUR.GRAY} size={15} style={{ marginRight: 10 }} />
-          <Text title="Search" type="paragraph" style={{ color: COLOUR.GRAY, fontWeight: '500' }} />
+      <View style={{width: "100%", paddingHorizontal: 20, alignItems:"center", justifyContent: "center"}}>
+        <TouchableOpacity onPress={() => props.onSearch()} activeOpacity={0.8} style={[styles.searchButton, { width: props.filter ? "80%" : "100%", backgroundColor: COLOUR.LIGHTGRAY, alignSelf: "center"}]}>
+          <Icon name="search" color={COLOUR.DARK_GRAY} size={18} style={{ marginRight: 10 }} />
+          <Text title="Search photos here." type="LOUIS_LIGHT" style={{ color: COLOUR.DARK_GRAY, fontWeight: '500', fontSize: 14 }} />
         </TouchableOpacity>
-        {props.filter ?<TouchableOpacity activeOpacity={0.8} style={[styles.filterButton]}>
-            <Image source={filter} style={styles.filterImage} resizeMode="contain" />
-        </TouchableOpacity> : null }
         </View> : null}
     </View>
   );
@@ -53,6 +70,34 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
     backgroundColor: COLOUR.WHITE
+  },
+  name: {
+      color: COLOUR.DARK_GRAY,
+  },
+  welcome: {
+      color: COLOUR.BLACK,
+      fontWeight: "700",
+      fontSize: 25
+  },
+  welcomeContainer: {
+    justifyContent:"center"
+  },
+  homeContainer: {
+    width: "100%",
+    height: 75,
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    flexDirection: "row"
+  },
+  profileImageBtn: {
+    width: 50,
+    height: 50,
+    borderRadius: 25,
+    overflow: "hidden"
+  },
+  profileImage: {
+    width: "100%",
+    height: "100%"
   },
   searchButton: {
     height: 50,

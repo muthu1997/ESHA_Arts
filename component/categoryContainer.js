@@ -37,7 +37,7 @@ const ProfileContainer = props => {
                         <View style={styles.catIcon}>
                             <Image source={item.icon} resizeMode="contain" style={{width: "80%", height: "60%"}} />
                         </View>
-                        <Text type="paragraph" title={item.title} style={[styles.catText,{color: getSelected === index ? COLOUR.WHITE : COLOUR.DARK_BLUE}]} />
+                        <Text type="ROBO_REGULAR" title={item.title} style={[styles.catText,{color: getSelected === index ? COLOUR.WHITE : COLOUR.DARK_BLUE}]} />
                     </TouchableOpacity>
                 }} />
         </View>

@@ -20,7 +20,7 @@ export default function Corousal(props) {
                     <Image source={trainer} style={styles.mainIcon} />
                 </View>
                 <Text style={{ color: COLOUR.PRIMARY, marginVertical: 10 }} title="Baranidaran Alagappan" type="title" />
-                <Text title={`Gym Trainer`} type="paragraph" />
+                <Text title={`Gym Trainer`} type="ROBO_REGULAR" />
                 <View style={styles.nameContainer}>
                 <TouchableOpacity onPress={() => Linking.openURL(`tel:+91 9940700537`)} activeOpacity={0.8} style={styles.socialButton}>
                         <Icon name="phone" size={25} color={COLOUR.WHITE} />

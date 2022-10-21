@@ -1,5 +1,5 @@
-export const PRIMARY = "rgb(120, 74, 246)";
-export const SECONDARY = "rgb(122, 74, 146)";
+export const PRIMARY = "#079992";
+export const SECONDARY = "#78e08f";
 export const SECONDARY_LIGHT = "rgba(122, 74, 146, 0.5)";
 export const BACKGROUND = "rgb(255, 255, 255)";
 export const BLACK = "rgb(0, 0, 0)";
@@ -15,6 +15,8 @@ export const SELECTED_COLOUR = "rgb(105, 73, 246)";
 export const ORANGE = "rgb(250, 219, 194)"
 export const ORANGE_DARK = "rgb(221, 156, 106)"
 export const DARK_GRAY = "#4C4E52";
+export const YELLOW = "#e1b12c";
+export const RED = "#e74c3c";
 
 export default {
     PRIMARY,
@@ -30,5 +32,6 @@ export default {
     SELECTED_COLOUR,
     ORANGE,
     ORANGE_DARK,
-    DARK_GRAY
+    DARK_GRAY,
+    RED
 }

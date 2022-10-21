@@ -3,32 +3,40 @@ import { StyleSheet, Dimensions, Text } from 'react-native';
 
 const DefaultText = props => {
   return (
-      <Text onPress={() => props.onViewAll ? props.onViewAll() : null} numberOfLines = {props.lines} {...props} style={[props.type=== 'label' ? styles.label :props.type=== 'paragraph' ? styles.para :props.type=== 'hint' ? styles.hint :props.type=== 'heading' ? styles.heading: styles.title, props.style]}>
+      <Text 
+      numberOfLines = {props.lines} 
+      {...props} 
+      style={[props.type=== 'LOUIS_LIGHT' ? styles.louislight :props.type=== 'ROBO_REGULAR' ? styles.roboregular :props.type=== 'ROBO_BOLD' ? styles.robobold :props.type=== 'DEVITTA' ? styles.devitta: props.type=== 'ROBOTO_MEDIUM' ? styles.robomedium : styles.title, props.style]}>
         {props.title}
       </Text>
   );
 } 
  
 const styles = StyleSheet.create({
-  label: {
-    fontWeight: '500',
+  louislight: {
     fontSize: 16,
-    padding:2
+    padding:2,
+    fontFamily: "Louis George Cafe"
   },
-  para: {
-    fontWeight: '500',
+  roboregular: {
     fontSize: 14,
-    padding:2
+    padding:2,
+    fontFamily: "Roboto-Regular"
   },
-  hint: {
-    fontWeight: '500',
-    fontSize: 10,
-    padding:2
+  robomedium: {
+    fontSize: 14,
+    padding:2,
+    fontFamily: "Roboto-Regular"
   },
-  heading: {
-    fontWeight: '700',
+  robobold: {
     fontSize: 18,
-    padding:2
+    padding:2,
+    fontFamily: "Roboto-Bold"
+  },
+  devitta: {
+    fontFamily: 'Devitta',
+    fontSize: 18,
+    padding:2,
   },
   title: {
     fontWeight: '700',

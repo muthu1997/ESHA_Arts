@@ -19,7 +19,7 @@ export default function Corousal(props) {
                     <Image source={{ uri: `https://drive.google.com/uc?export=view&id=1S-NmdQ_oaO6dtatJAz-7L9QUvF5YLEFf` }} style={styles.mainIcon} />
                 </View>
                 <Text style={{ color: COLOUR.PRIMARY, marginVertical: 10 }} title="Muthukumar Subramaniyan" type="title" />
-                <Text title="Software Developer" type="paragraph" />
+                <Text title="Software Developer" type="ROBO_REGULAR" />
                 <View style={styles.nameContainer}>
                     <TouchableOpacity onPress={() => Linking.openURL(`tel:+91 7867926344`)} activeOpacity={0.8} style={styles.socialButton}>
                         <Icon name="phone" size={25} color={COLOUR.WHITE} />

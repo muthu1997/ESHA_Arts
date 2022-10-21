@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "210348173854",
-    "project_id": "gym-coach-92e3d",
-    "storage_bucket": "gym-coach-92e3d.appspot.com"
+    "project_number": "140290660872",
+    "project_id": "easha-3c1b2",
+    "storage_bucket": "easha-3c1b2.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:210348173854:android:f47af85e4a898ebece1c0f",
+        "mobilesdk_app_id": "1:140290660872:android:aa8181c572093a76d1cfbd",
         "android_client_info": {
-          "package_name": "com.esha.mobile"
+          "package_name": "com.eashaarts.mobile"
         }
       },
       "oauth_client": [
         {
-          "client_id": "210348173854-o2m7v7soant3jik9ogsn8np06l228oer.apps.googleusercontent.com",
+          "client_id": "140290660872-ghp74qgafgpqfigk6sa0mq9lgilosvae.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyDJHj1Es2SWi9H7QlC0Rww_3vvPVIn1daw"
+          "current_key": "AIzaSyCh_QY387-TXZ3ls5XOZ1_urn3-h_7Qos8"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "210348173854-o2m7v7soant3jik9ogsn8np06l228oer.apps.googleusercontent.com",
+              "client_id": "140290660872-ghp74qgafgpqfigk6sa0mq9lgilosvae.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

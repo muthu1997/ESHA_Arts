@@ -14,8 +14,8 @@ const AddressCard = props => {
                         <Icon name="location-pin" size={25} color={COLOUR.PRIMARY} />
                     </View>
                     <View style={{ width: "80%" }}>
-                        <Text title="Service Location" type="label" style={{ marginLeft: 10 }} />
-                        <Text title="210, First street, Agarappatti, Rajagopalapuram Post, Pudukkottai, 622003" type="label" lines={1} style={{ marginLeft: 10, fontSize: 12, width: "90%" }} />
+                        <Text title="Service Location" type="ROBOTO_MEDIUM" style={{ marginLeft: 10 }} />
+                        <Text title="210, First street, Agarappatti, Rajagopalapuram Post, Pudukkottai, 622003" type="ROBOTO_MEDIUM" lines={1} style={{ marginLeft: 10, fontSize: 12, width: "90%" }} />
                     </View>
                 </View>
                 {props.edit ? 

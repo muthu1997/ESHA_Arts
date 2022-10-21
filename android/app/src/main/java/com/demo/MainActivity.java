@@ -1,4 +1,4 @@
-package com.esha.mobile;
+package com.eashaarts.mobile;
 import android.os.Bundle;
 import com.facebook.react.ReactActivity;
 import org.devio.rn.splashscreen.SplashScreen;

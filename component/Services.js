@@ -20,8 +20,8 @@ const DashboardOrder = props => {
                     :
                     <Icon name="image" size={50} /> }
                         <View style={styles.catIcon}>
-                        <Text type="heading" lines={1} title={props.isDetail ? item.name : item.day} style={styles.catText} />
-                        <Text type="label" title={props.isDetail ? `${item.rep} Reps and ${item.set} Sets` : item.workout} style={styles.catText} />
+                        <Text type="ROBO_BOLD" lines={1} title={props.isDetail ? item.name : item.day} style={styles.catText} />
+                        <Text type="ROBOTO_MEDIUM" title={props.isDetail ? `${item.rep} Reps and ${item.set} Sets` : item.workout} style={styles.catText} />
                         </View>
                     </TouchableOpacity>
                 }}

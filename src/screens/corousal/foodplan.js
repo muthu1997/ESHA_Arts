@@ -44,7 +44,7 @@ export default function Corousal(props) {
                         <View style={{ width: width / 4, height: width / 4, marginRight: 5 }}>
                             <Image source={{ uri: image?.length > 0 ? image[index] : "https://www.eatthis.com/wp-content/uploads/sites/4/2020/01/man-healthy-food-diet-eggs-proteins-salmon.jpg?quality=82&strip=1" }} style={styles.image} resizeMode="contain" />
                         </View>
-                        <Text key={index} type="label" title={item} style={{ color: COLOUR.BLACK, width: "75%" }} />
+                        <Text key={index} type="ROBOTO_MEDIUM" title={item} style={{ color: COLOUR.BLACK, width: "75%" }} />
                     </View>
                 })}
             </View>

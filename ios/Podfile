@@ -24,6 +24,12 @@ target 'demo' do
 
   pod 'react-native-splash-screen', :path => '../node_modules/react-native-splash-screen'
 
+  pod 'react-native-cameraroll', :path => '../node_modules/@react-native-community/cameraroll'
+
+  pod 'lottie-react-native', :path => '../node_modules/lottie-react-native'
+
+  pod 'react-native-razorpay', :path => '../node_modules/react-native-razorpay'
+
   target 'demoTests' do
     inherit! :complete
     # Pods for testing

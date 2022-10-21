@@ -1,23 +1,95 @@
-import { UPDATE_WORKOUT_PLAN, UPDATE_WORKOUT_DATA, UPDATE_WORKOUT_LIST } from './type';
+import { UPDATE_CATEGORY, UPDATE_TOPPICK, UPDATE_FEATURED, UPDATE_PRODUCT_BY_CATEGORY, UPDATE_CATEGORY_LIST, UPDATE_FAVORUIT_PRODUCTS, UPDATE_PROFILE_DATA, UPDATE_FAVORUIT_PRODUCTS_LIST, UPDATE_CART_LIST, UPDATE_CART_PRODUCT_LIST, UPDATE_ADDRESS_LIST, LOGOUT, UPDATE_ORDER_LIST } from './type';
 
 const initialState = {
-    workout_plan: "",
-    workout_data: []
+    dash_category_list: [],
+    top_pick: [],
+    featured_product: [],
+    prod_by_cat_list: [],
+    category_list: [],
+    favoruit_list: [],
+    favoruit_product_list: [],
+    profile: "",
+    user_data: "",
+    cart_list: [],
+    cart_product_list: [],
+    address_list: [],
+    orderList: []
 };
-const workoutReducer = (state = initialState, action) => {
+const mainReducer = (state = initialState, action) => {
     switch (action.type) {
-        case UPDATE_WORKOUT_PLAN:
+        case UPDATE_CATEGORY:
             return {
                 ...state,
-                workout_plan: action.payload
+                dash_category_list: action.payload
             };
-        case UPDATE_WORKOUT_DATA:
+        case UPDATE_TOPPICK:
             return {
                 ...state,
-                workout_data: action.payload
+                top_pick: action.payload
+            };
+        case UPDATE_FEATURED:
+            return {
+                ...state,
+                featured_product: action.payload
+            };
+        case UPDATE_PRODUCT_BY_CATEGORY:
+            return {
+                ...state,
+                prod_by_cat_list: action.payload
+            };
+        case UPDATE_CATEGORY_LIST:
+            return {
+                ...state,
+                category_list: action.payload
+            };
+        case UPDATE_FAVORUIT_PRODUCTS:
+            return {
+                ...state,
+                favoruit_list: action.payload
+            };
+        case UPDATE_PROFILE_DATA:
+            return {
+                ...state,
+                profile: action.payload
+            };
+        case UPDATE_FAVORUIT_PRODUCTS_LIST:
+            return {
+                ...state,
+                favoruit_product_list: action.payload
+            };
+        case UPDATE_CART_LIST:
+            return {
+                ...state,
+                cart_list: action.payload
+            };
+        case UPDATE_CART_PRODUCT_LIST:
+            return {
+                ...state,
+                cart_product_list: action.payload
+            };
+        case UPDATE_ADDRESS_LIST:
+            return {
+                ...state,
+                address_list: action.payload
+            };
+        case LOGOUT:
+            return {
+                ...state,
+                favoruit_list: [],
+                favoruit_product_list: [],
+                profile: "",
+                user_data: "",
+                cart_list: [],
+                cart_product_list: [],
+                address_list: []
+            };
+            case UPDATE_ORDER_LIST:
+            return {
+                ...state,
+                orderList: action.payload
             };
         default:
             return state;
     }
 }
-export default workoutReducer;
+export default mainReducer;

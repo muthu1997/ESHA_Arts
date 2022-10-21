@@ -7,8 +7,8 @@ const TitleContainer = props => {
   return (
       <View style={[styles.headerContainer, props.style]}>
           <View style={{ justifyContent:'space-between', width: "100%"}}>
-            <Text title={props.title} type="heading" style={{color: COLOUR.BLACK}} />
-            {props.secondaryTitle ? <Text onPress={() => props.onViewAll ? props.onViewAll() : null} title={props.secondaryTitle} type="label" style={{color: COLOUR.BLACK, fontWeight: "500"}} /> : null }
+            <Text title={props.title} type="ROBO_BOLD" style={{color: COLOUR.BLACK, fontSize: 20}} />
+            {props.secondaryTitle ? <Text onPress={() => props.onViewAll ? props.onViewAll() : null} title={props.secondaryTitle} type="ROBO_REGULAR" style={{color: COLOUR.BLACK, fontWeight: "500"}} /> : null }
             {props.addButton ? <TouchableOpacity activeOpacity={0.8} style={styles.addButton}>
               <Icon name="plus" size={20} color={COLOUR.WHITE} />
             </TouchableOpacity> : null }

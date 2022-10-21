@@ -104,7 +104,7 @@ export default function Settings(props) {
                 <View style={{flex: 1, alignItems:"center", justifyContent:"center"}}>
                 <Button title="Close" onPress={() => setGoalModal(false)} />
                 </View>
-                    <Text title={"Note: Food diet plan will be vary based on the goal.."} type="label" style={{ fontSize: 12, fontWeight: "500", color: COLOUR.PRIMARY, textAlign: "center" }} />
+                    <Text title={"Note: Food diet plan will be vary based on the goal.."} type="ROBOTO_MEDIUM" style={{ fontSize: 12, fontWeight: "500", color: COLOUR.PRIMARY, textAlign: "center" }} />
             </View>
         )
     }
@@ -126,7 +126,7 @@ export default function Settings(props) {
             <Modal visible={getGoalModal}>
                 {renderGoal()}
             </Modal>
-                    <Text title={"Version 1.0.0"} type="paragraph" style={{ fontSize: 12, fontWeight: "500", color: COLOUR.PRIMARY, position: "absolute", bottom: 10 }} />
+                    <Text title={"Version 1.0.0"} type="ROBO_REGULAR" style={{ fontSize: 12, fontWeight: "500", color: COLOUR.PRIMARY, position: "absolute", bottom: 10 }} />
         </View>
     )
 }

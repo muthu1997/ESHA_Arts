@@ -12,6 +12,7 @@ import { getFunction, deleteFunction } from "../../../constants/apirequest";
 import { Modal } from 'react-native-paper';
 import Lottie from 'lottie-react-native';
 const { width } = Dimensions.get("screen");
+import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
 
 export default function CartScreen(props) {
     const user = useSelector(state => state.reducer.profile);
@@ -56,6 +57,7 @@ export default function CartScreen(props) {
             if (res !== "error") {
                 totalCalculator();
                 dispatch(updateCartProductList(res.data));
+                AmplitudeTrack("CART_LIST", {number: res.data?.length})
             }
             setRemoving(false)
             setVisible(false)
@@ -68,6 +70,7 @@ export default function CartScreen(props) {
         deleteFunction(`/cart/${id}`, res => {
             if (res !== "error") {
                 getCartList();
+                AmplitudeTrack("DELETE_CART_PRODUCT", {product: id})
             } else {
                 setRemoving(false)
                 setVisible(false);
@@ -157,7 +160,10 @@ export default function CartScreen(props) {
                                 {renderTotal()}
                                 <Button
                                     title="Checkout"
-                                    onPress={() => props.navigation.navigate("Payment")}
+                                    onPress={() => {
+                                        props.navigation.navigate("Payment");
+                                        AmplitudeTrack("CHECKOUT_BUTTON")
+                                    }}
                                     style={{ alignSelf: "center", margin: 20 }} />
                             </View> : null
                         }} />

@@ -17,7 +17,6 @@ import com.facebook.soloader.SoLoader;
 import java.lang.reflect.InvocationTargetException;
 import java.util.List;
 import org.devio.rn.splashscreen.SplashScreenReactPackage;
-import com.reactnativecommunity.cameraroll.CameraRollPackage;
 import com.dieam.reactnativepushnotification.ReactNativePushNotificationPackage;
 import com.razorpay.rn.RazorpayPackage;
 

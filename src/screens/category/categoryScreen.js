@@ -38,7 +38,7 @@ export default function CartScreen(props) {
         return (
             <TouchableOpacity activeOpacity={0.8} onPress={() => props.navigation.navigate("ProductList", {data: item})} style={styles.cardContainer}>
                 <View style={styles.imageContainer}>
-                    <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+                    <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="stretch" />
                 </View>
                 <View style={styles.dataContainer}>
                     <Text title={item.name} type="ROBOTO_MEDIUM" lines={1} />
@@ -81,7 +81,7 @@ const styles = StyleSheet.create({
     cardContainer: {
         width: width / 2.5,
         borderRadius: 5,
-        padding: 10,
+        padding: 5,
         margin: 5,
         justifyContent: "center",
         alignItems: "center",
@@ -91,6 +91,8 @@ const styles = StyleSheet.create({
     imageContainer: {
         width: "100%",
         height: width / 2.5,
+        borderRadius: 5,
+        overflow: "hidden"
     },
     dataContainer: {
         width: "100%",

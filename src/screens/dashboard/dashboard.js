@@ -1,60 +1,61 @@
 import React, { useState, useReducer, useEffect } from "react";
-import { View, StyleSheet, StatusBar, ScrollView, Dimensions, DeviceEventEmitter, FlatList, TouchableOpacity, LogBox, Touchable } from "react-native";
+import { View, StyleSheet, StatusBar, ScrollView, Dimensions, DeviceEventEmitter, FlatList, TouchableOpacity, LogBox, Linking } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Header from "../../../component/header";
 import TitleContainer from "../../../component/titleContainer";
-import { getFunction, sendSMS } from "../../../constants/apirequest";
+import { getFunction, putFunction } from "../../../constants/apirequest";
 import FastImage from 'react-native-fast-image'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from 'react-native-splash-screen'
 import moment from "moment";
 import Text from "../../../component/text";
 import { useSelector, useDispatch } from 'react-redux';
+import { Modal } from 'react-native-paper';
 import Lottie from 'lottie-react-native';
 const { width, height } = Dimensions.get("screen");
 import analytics from "@react-native-firebase/analytics";
+import Button from "../../../component/button";
+import {APP_VERSION} from "../../../constants/strings";
 import { updateDashCategoryList, updateTopPick, updateFeatured, updateFavoruitList, updateProfileData, updateCartList, updateCartProductList } from "../../redux/action";
+import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
 
 export default function DashboardScreen(props) {
     const getCategoryListData = useSelector(state => state.reducer.dash_category_list);
     const getTopPickData = useSelector(state => state.reducer.top_pick);
     const getFeatured = useSelector(state => state.reducer.featured_product);
     const user = useSelector(state => state.reducer.profile);
+    const [mascelinous, setMascelinous] = useState({});
+    const [versionUpdate, setVersionUpdate] = useState(false);
     const dispatch = useDispatch();
 
     useEffect(() => {
         LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
+        AmplitudeTrack("Dashboard Init")
         getLocalDatas();
         getCategoryList();
         getTopPicksList();
         getFeaturedList();
-        sample();
+        getMascelinous();
     }, [])
 
-    async function sample() {
-        await analytics().logEvent('Basket_Event', {
-            item: "something",
-            description: "Some description here"
-        })
-    }
 
-    // DeviceEventEmitter.addListener("REFRESH_CART", res => {
-    //     if (res === "yes") {
-    //         DeviceEventEmitter.emit("REFRESH_CART", "no")
-    //         if (user) {
-    //             getLocalDatas();
-    //         }
-    //         getCategoryList();
-    //         getTopPicksList();
-    //         getFeaturedList();
-    //     }
-    //     if (res === "logout") {
-    //         DeviceEventEmitter.emit("REFRESH_CART", "no")
-    //         getCategoryList();
-    //         getTopPicksList();
-    //         getFeaturedList();
-    //     }
-    // })
+    const storeFCMToken = async () => {
+        await AsyncStorage.getItem("TOKE_ADDED").then(res => {
+            // if(res !== "YES") {
+                let fcmToken = global.fcmtoken;
+                var data = {
+                    "token": fcmToken
+                }
+                console.log("toek update")
+                putFunction(`/user/update/${user._id}`, data, async(res) => {
+                    if (res.success === true) {
+                        console.log(res)
+                        await AsyncStorage.setItem("TOKE_ADDED", "YES");
+                    }
+                })
+            // }
+        });
+    }
 
     const getLocalDatas = async () => {
         await AsyncStorage.getItem("USER_ID").then(res => {
@@ -63,6 +64,7 @@ export default function DashboardScreen(props) {
                 getUserData(res);
                 getCartList(res);
                 getCartProductList(res);
+                storeFCMToken();
             }
         });
     }
@@ -105,9 +107,14 @@ export default function DashboardScreen(props) {
 
     const getUserData = (_id) => {
         getFunction(`/user/${_id}`, res => {
-            console.log("dashboard")
+            console.log(res)
             if (res !== "error") {
                 dispatch(updateProfileData(res.data));
+                let usr = res.data;
+                AmplitudeTrack("USER_DATA",{
+                    name: usr.name,
+                    id: _id
+                })
             }
         })
     }
@@ -136,6 +143,19 @@ export default function DashboardScreen(props) {
         getFunction(`/cart/${_id}`, res => {
             if (res !== "error") {
                 dispatch(updateCartList(res.data))
+            }
+        })
+    }
+
+    const getMascelinous = (_id) => {
+        getFunction(`/user/mascelinous`, res => {
+            if (res !== "error") {
+                console.log(res)
+                let result = res.data;
+                setMascelinous(result);
+                if(result.APP_VERSION !== APP_VERSION) {
+                    setVersionUpdate(true);
+                }
             }
         })
     }
@@ -248,6 +268,17 @@ export default function DashboardScreen(props) {
                         keyExtractor={item => item._id} />
                 </View>
             </ScrollView>
+            <Modal visible={versionUpdate} >
+                <View style={styles.modalContainer}>
+                    <Text title={"New Update Available!"} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} />
+                    <Text title={mascelinous.APP_UP_DESC} type="ROBO_REGULAR" style={{ color: COLOUR.DARK_GRAY, textAlign: "center", width: "80%", marginTop: 10 }} />
+                        <Lottie source={require('../../../constants/update.json')} autoPlay loop={false} style={{ width: 200, height: 200 }} />
+                        <Button
+                        onPress={async() => {await Linking.openURL(mascelinous.APP_LINK)}}
+                        title={`Update Now`}
+                        style={{ alignSelf: "center", margin: 20 }} />
+                </View>
+            </Modal>
         </View>
     )
 }
@@ -304,4 +335,13 @@ const styles = StyleSheet.create({
         backgroundColor: COLOUR.WHITE,
         marginLeft: 5
     },
+    modalContainer: {
+        width: "90%",
+        height: "90%",
+        backgroundColor: COLOUR.WHITE,
+        alignSelf: "center",
+        borderRadius: 10,
+        alignItems: "center",
+        justifyContent: "center"
+    }
 })

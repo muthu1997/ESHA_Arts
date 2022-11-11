@@ -13,9 +13,11 @@ import RazorpayCheckout from 'react-native-razorpay';
 import { updateCartProductList } from "../../redux/action";
 import { Modal } from 'react-native-paper';
 import Lottie from 'lottie-react-native';
+import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
+import {PAUMENT_TYPE, PAUMENT_METHOD} from "../../res/arrayList";
 
 export default function PaymentScreen(props) {
-    const [paymentSelected, setPaymentSelected] = useState("");
+    const [paymentSelected, setPaymentSelected] = useState("direct");
     const [address, setAddress] = useState(0);
     const [addressList, setAddressList] = useState([]);
     const [loader, setLoader] = useState(true);
@@ -55,6 +57,20 @@ export default function PaymentScreen(props) {
     }
 
 
+    function dummyOrder() {
+        if (paymentSelected === "") {
+            ToastAndroid.showWithGravity("Select payment type", ToastAndroid.CENTER, ToastAndroid.SHORT);
+        } else if (address === "") {
+            ToastAndroid.showWithGravity("Select address", ToastAndroid.CENTER, ToastAndroid.SHORT);
+        } else {
+            let total = Number(deliveryFees + totalCalculator("subtotal"));
+            let payAmount = payType === "full" ? total : (50 / 100) * total;
+            setPayVisible(true);
+            newOrderFunction();
+            AmplitudeTrack("PAYMENT_SUCCESS", {id: user._id, value: payAmount});
+        }
+    }
+
     function validatePayment() {
         if (paymentSelected === "") {
             ToastAndroid.showWithGravity("Select payment type", ToastAndroid.CENTER, ToastAndroid.SHORT);
@@ -80,18 +96,19 @@ export default function PaymentScreen(props) {
 
             RazorpayCheckout.open(options).then((data) => {
                 // handle success
-                console.log(data)
                 setPayVisible(true);
                 newOrderFunction();
+                AmplitudeTrack("PAYMENT_SUCCESS", {id: user._id, value: payAmount});
             }).catch((error) => {
                 // handle failure
-                console.log(error)
+                AmplitudeTrack("PAYMENT_FAILURE", {id: user._id, error: `${error.code} | ${error.description}`});
                 console.log(`Error: ${error.code} | ${error.description}`);
             });
         }
     }
 
     function newOrderFunction() {
+        AmplitudeTrack("ORDER_PROCESSING", {id: user._id});
         var product = new Array();
         let total = Number(deliveryFees + totalCalculator("subtotal"));
         let paid = payType === "full" ? total : (50 / 100) * total;
@@ -112,17 +129,17 @@ export default function PaymentScreen(props) {
             amountPaid: Number(paid),
             amountDue: payType === "full" ? 0 : Number(total - paid)
         }
-        console.log(options)
         postFunction(`/order/new`, options, (res) => {
-            console.log(res)
             if (res.success === true) {
                 setOrderConfirm(true)
                 deleteCartFunction();
+                AmplitudeTrack("ORDER_SUCCESS", {id: user._id});
             }else {
                 setOrderConfirm(false)
                 setPayVisible(false);
                 ToastAndroid.showWithGravity("Order placement failed. Please try again later.", ToastAndroid.CENTER, ToastAndroid.LONG);
                 props.navigation.navigate("CartScreen");
+                AmplitudeTrack("ORDER_FAIL", {id: user._id, order_data: options});
             }
         })
     }
@@ -155,19 +172,15 @@ export default function PaymentScreen(props) {
 
     function renderPaymentMethod() {
         return (
-            <View style={[styles.cardContainer, { flexDirection: "column", justifyContent: "center", height: 70, marginTop: 20 }]}>
-                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2, borderColor: COLOUR.LIGHTGRAY }]}>
-                    <Text title={"Razor Pay"} type="ROBOTO_MEDIUM" lines={1} />
+            <View style={[styles.cardContainer, { flexDirection: "column", justifyContent: "center", marginTop: 20 }]}>
+                {PAUMENT_METHOD.map(item => {
+                return <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2, borderColor: COLOUR.LIGHTGRAY }]}>
+                    <Text title={item.title} type="ROBOTO_MEDIUM" lines={1} />
                     <RadioButton
-                        onPress={() => { setPaymentSelected("razorpay") }}
-                        status={paymentSelected === "razorpay" ? "checked" : "unchecked"} />
+                        onPress={() => { setPaymentSelected(item.value) }}
+                        status={paymentSelected === item.value ? "checked" : "unchecked"} />
                 </View>
-                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between" }]}>
-                    <Text title={"Google Pay"} type="ROBOTO_MEDIUM" lines={1} />
-                    <RadioButton
-                        onPress={() => { setPaymentSelected("gpay") }}
-                        status={paymentSelected === "gpay" ? "checked" : "unchecked"} />
-                </View> */}
+                })}
             </View>
         )
     }
@@ -175,18 +188,14 @@ export default function PaymentScreen(props) {
     function renderPaymentType() {
         return (
             <View style={[styles.cardContainer, { flexDirection: "column", justifyContent: "center", height: 100, marginTop: 20 }]}>
-                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 50, alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2, borderColor: COLOUR.LIGHTGRAY }]}>
-                    <Text title={"Pay full amount"} type="ROBOTO_MEDIUM" lines={1} />
+                {PAUMENT_TYPE.map(item => {
+                return <View key={item.id} style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 50, alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2, borderColor: COLOUR.LIGHTGRAY }]}>
+                    <Text title={item.title} type="ROBOTO_MEDIUM" lines={1} />
                     <RadioButton
-                        onPress={() => { setPayType("full") }}
-                        status={payType === "full" ? "checked" : "unchecked"} />
+                        onPress={() => { setPayType(item.value) }}
+                        status={payType === item.value ? "checked" : "unchecked"} />
                 </View>
-                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 50, alignItems: "center", justifyContent: "space-between" }]}>
-                    <Text title={"Pay Advance amount(50%)"} type="ROBOTO_MEDIUM" lines={1} />
-                    <RadioButton
-                        onPress={() => { setPayType("advance") }}
-                        status={payType === "advance" ? "checked" : "unchecked"} />
-                </View>
+                })}
             </View>
         )
     }
@@ -228,24 +237,29 @@ export default function PaymentScreen(props) {
                     <TitleContainer
                         title="Shipping address" />
                     {renderAddress()}
-                    <TitleContainer
+                    {/* <TitleContainer
                         title="Payment type" />
-                    {renderPaymentType()}
+                    {renderPaymentType()} */}
                     <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", paddingHorizontal: 20, height: 40, alignItems: "center", justifyContent: "space-between", overflow: "hidden" }]}>
                         <Text title={"Subtotal"} type="ROBO_REGULAR" lines={1} />
                         <Text title={`₹` + totalCalculator("subtotal")} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} />
                     </View>
-                    <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", paddingHorizontal: 20, height: 40, alignItems: "center", justifyContent: "space-between", overflow: "hidden" }]}>
-                        <Text title={"Delivery Price"} type="ROBO_REGULAR" lines={1} />
-                        <Text title={`₹` + deliveryFees} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} />
+                    <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", paddingHorizontal: 20, height: 70, alignItems: "center", justifyContent: "space-between", overflow: "hidden" }]}>
+                        {/* <Text title={"Delivery Price"} type="ROBO_REGULAR" lines={1} />
+                        <Text title={`₹` + deliveryFees} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} /> */}
+                <Text title={"Our Easha Arts customer care officer will call you and confirm the order and delivery price. Make sure your registered mobile number and email are active."} type="ROBOTO_MEDIUM" style={{color: "red"}} lines={4} />
                     </View>
                     <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", paddingHorizontal: 20, height: 40, alignItems: "center", justifyContent: "space-between", overflow: "hidden" }]}>
                         <Text title={"Total"} type="ROBO_BOLD" lines={1} />
                         <Text title={`₹` + (totalCalculator("subtotal") + deliveryFees)} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.ORANGE_DARK }} />
                     </View>
-                    <Button
+                    {/* <Button
                         onPress={() => validatePayment()}
                         title={`Pay ₹${payType === "full" ? (totalCalculator("subtotal") + deliveryFees) : ((50 / 100) * (totalCalculator("subtotal") + deliveryFees))}`}
+                        style={{ alignSelf: "center", margin: 20 }} /> */}
+                        <Button
+                        onPress={() => dummyOrder()}
+                        title={`Order Now`}
                         style={{ alignSelf: "center", margin: 20 }} />
                 </View>
             </ScrollView> :
@@ -254,7 +268,8 @@ export default function PaymentScreen(props) {
                 </View>}
             <Modal visible={payVisible} >
                 <View style={styles.modalContainer}>
-                    <Text title={"Payment Success!"} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} />
+                    {/* <Text title={"Payment Success!"} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} /> */}
+                    <Text title={"Hoooraayyy!!"} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} />
                     <Text title={"Please wait your order is in progress. It will take upto 1 minute to complete.."} type="ROBO_REGULAR" style={{ color: COLOUR.DARK_GRAY, textAlign: "center", width: "80%", marginTop: 10 }} />
                     {!orderConfirm ? <Lottie source={require('../../../constants/message.json')} autoPlay loop style={{ width: 200, height: 200 }} /> :
                         <Lottie source={require('../../../constants/order_success.json')} autoPlay style={{ width: 200, height: 200 }} />}

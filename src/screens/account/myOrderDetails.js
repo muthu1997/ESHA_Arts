@@ -21,12 +21,13 @@ export default function MyOrdersDetails(props) {
     const [addressData, setAddressData] = useState("");
     const [orderStatus, setOrderStatus] = useState("");
     const [btnLoader, setBtnLoader] = useState(false);
+    const [isAmountDue, setIsAmountDue] = useState(false);
     const user = useSelector(state => state.reducer.profile);
     useEffect(() => {
-        console.log(moment())
         getAddressById();
         let status = orderData.status === "PROCESSING" ? 0 : orderData.status === "INPROCESS" ? 1 : orderData.status === "PAYMENT" ? 2 : orderData.status === "SHIPMENT" ? 3 : orderData.status === "DELIVERED" ? 4 : 0
         setOrderStatus(status)
+        setIsAmountDue(orderData.amountDue > 0 ? false : true)
     }, [])
 
     function getAddressById() {
@@ -127,10 +128,11 @@ export default function MyOrdersDetails(props) {
                     <Text title={"Subtotal"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.subTotal}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
                 </View>
-                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between" }]}>
+                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between" }]}>
                     <Text title={"Delivery Price"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.deliveryPrice}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
-                </View>
+                </View> */}
+                <Text title={"Our Easha Arts customer care officer will call you and confirm the order and delivery price"} type="ROBOTO_MEDIUM" style={{color: "red"}} lines={3} />
                 <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between", borderTopWidth: 1 }]}>
                     <Text title={"Total"} type="ROBO_BOLD" lines={1} />
                     <Text title={`₹ ${orderData?.totalPrice}`} type="ROBO_BOLD" lines={2} style={{ color: COLOUR.PRIMARY }} />
@@ -147,7 +149,7 @@ export default function MyOrdersDetails(props) {
                 onGoBack={() => props.navigation.goBack()}
                 title={"Order Details" + orderStatus} />
             <ScrollView showsVerticalScrollIndicator={false}>
-                {orderData?.amountDue > 0  ?
+                {isAmountDue  ?
                     <StepIndicator
                         customStyles={customStyles}
                         currentPosition={orderStatus}
@@ -176,14 +178,14 @@ export default function MyOrdersDetails(props) {
                     <Text title={"Payment Method"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={"Online"} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
                 </View>
-                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE }]}>
+                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE }]}>
                     <Text title={"Amount Paid"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.amountPaid}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
                 </View>
                 <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE }]}>
                     <Text title={"Amount Due"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.amountDue}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.RED }} />
-                </View>
+                </View> */}
                 {orderData.status === "PAYMENT" && orderData?.amountDue > 0 ?
                     <View style={[styles.dataContainer, { width: "100%", height: 60, alignItems: "center", justifyContent: "center", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE, merginTop: 20 }]}>
                         <Button

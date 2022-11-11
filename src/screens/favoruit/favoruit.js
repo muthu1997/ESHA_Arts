@@ -9,6 +9,7 @@ const { width } = Dimensions.get("screen");
 import { updateFavProductList, updateFavoruitList } from "../../redux/action";
 import { useSelector, useDispatch } from 'react-redux';
 import Lottie from 'lottie-react-native';
+import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
 
 export default function FavoruitScreen(props) {
     const favList = useSelector(state => state.reducer.favoruit_list);
@@ -48,9 +49,9 @@ export default function FavoruitScreen(props) {
 
     function getFavoruitList() {
         getFunction(`/fav/productlist/${user._id}`, res => {
-            console.log("fav")
             if (res.success === true) {
                 dispatch(updateFavProductList(res.data))
+                AmplitudeTrack("FAV_COUNT", {number: res.data?.length})
             }
             setLoader(false);
             setFavLoader(false);
@@ -74,6 +75,7 @@ export default function FavoruitScreen(props) {
         let favFilter = favList.filter(x => x.itemId === productId)
         deleteFunction(`/fav/${favFilter[0]._id}`, res => {
             getFavoruitList();
+            AmplitudeTrack("DELETE_FAV", {product: favFilter[0]._id})
         })
     }
 

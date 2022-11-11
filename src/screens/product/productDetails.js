@@ -11,6 +11,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import { updateFavoruitList, updateFavProductList, updateCartList, updateCartProductList } from "../../redux/action";
 import { postFunction, getFunction, deleteFunction } from "../../../constants/apirequest";
 import ImageZoom from 'react-native-image-pan-zoom';
+import RNFetchBlob from 'rn-fetch-blob'
+import Share from 'react-native-share';
+import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
 
 export default function Corousal(props) {
     const [getParam, setParam] = useState(props.route.params.data);
@@ -42,6 +45,20 @@ export default function Corousal(props) {
         })
     }
 
+    async function shareProductFunction() {
+        let options = {
+            message: "Hey there!, I",
+            url: "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
+        }
+        Share.open(options)
+            .then((res) => {
+                console.log(res);
+            })
+            .catch((err) => {
+                err && console.log(err);
+            });
+    }
+
     function getFavList() {
         getFunction(`/fav/${user._id}`, res => {
             if (res.success === true) {
@@ -57,6 +74,7 @@ export default function Corousal(props) {
         getFunction(`/fav/productlist/${user._id}`, res => {
             if (res.success === true) {
                 dispatch(updateFavProductList(res.data))
+                AmplitudeTrack("FAV_COUNT", {number: res.data?.length})
             }
         })
     }
@@ -65,7 +83,7 @@ export default function Corousal(props) {
         setFavLoader(true);
         let favFilter = favList.filter(x => x.itemId === getParam._id)
         deleteFunction(`/fav/${favFilter[0]._id}`, res => {
-            console.log(res)
+            AmplitudeTrack("DELETE_FAV", {product: favFilter[0]._id})
             setDeleteFav("Done")
             getFavList();
             getFavoruitList();
@@ -80,6 +98,7 @@ export default function Corousal(props) {
                 if (res.success === true) {
                     getCartList();
                     getCartProductList();
+                    AmplitudeTrack("ADD_CART", {product: getParam._id})
                 }
             })
         } else {
@@ -100,6 +119,7 @@ export default function Corousal(props) {
             if (res !== "error") {
                 setCartLoader(false);
                 dispatch(updateCartList(res.data))
+                AmplitudeTrack("CART_LIST", {number: res.data?.length})
             }
         })
     }
@@ -110,6 +130,7 @@ export default function Corousal(props) {
         deleteFunction(`/cart/${cartData[0]._id}`, res => {
             if (res.success === true) {
                 getCartList();
+                AmplitudeTrack("DELETE_CART_PRODUCT", {product: cartData[0]._id})
             }
         })
     }
@@ -119,9 +140,6 @@ export default function Corousal(props) {
             <StatusBar backgroundColor={COLOUR.BACKGROUND} barStyle="dark-content" />
             <ScrollView>
                 <View style={styles.imageContainer}>
-                    {/* <TouchableOpacity style={styles.camButton} onPress={() => hasAndroidPermission()} activeOpacity={0.9}>
-                    <Icon name="camera" size={20} />
-                </TouchableOpacity> */}
                     <ImageZoom cropWidth={Dimensions.get('window').width}
                         cropHeight={height / 2}
                         imageWidth={height / 3}
@@ -146,6 +164,10 @@ export default function Corousal(props) {
                         <TouchableOpacity activeOpacity={0.8} style={{ width: 35, height: 35, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center", position: "absolute", top: 10, right: 10 }}>
                             <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{ width: 30, height: 30 }} />
                         </TouchableOpacity>}
+
+                    {/* <TouchableOpacity style={styles.camButton} onPress={() => shareProductFunction()} activeOpacity={0.9}>
+                    <Icon name="share" size={20} color={favFilter} />
+                </TouchableOpacity> */}
                 </View>
                 <View style={{ flex: 1, paddingHorizontal: 20 }}>
                     <Text title={getParam.name} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
@@ -223,8 +245,8 @@ const styles = StyleSheet.create({
         color: COLOUR.DARK_GRAY
     },
     camButton: {
-        width: 40,
-        height: 40,
+        width: 35,
+        height: 35,
         borderRadius: 20,
         backgroundColor: COLOUR.WHITE,
         elevation: 3,
@@ -232,7 +254,7 @@ const styles = StyleSheet.create({
         justifyContent: "center",
         position: "absolute",
         top: 10,
-        right: 10
+        right: 60
     },
     dimensionContainer: {
         width: "100%",

@@ -5,10 +5,23 @@
     android:background="#FFFF"
     android:orientation="vertical">
 
+
     <ImageView
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
+        android:layout_width="200dp"
+        android:layout_height="200dp"
         android:scaleType="centerCrop"
+        android:layout_centerHorizontal="true"
+        android:layout_centerVertical="true"
         android:src="@drawable/launch_screen" />
 
+    <TextView
+        android:id="@+id/textView"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center|bottom"
+        android:text="Easha Arts"
+        android:textColor="#000000"
+        android:textSize="20sp"
+        android:layout_marginBottom="50dp"
+        android:textStyle="bold" />
 </RelativeLayout>

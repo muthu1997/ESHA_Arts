@@ -23,6 +23,8 @@ import { createStore, combineReducers } from 'redux';
 import { Provider } from 'react-redux';
 import messaging, { firebase } from '@react-native-firebase/messaging';
 import PushNotification from "react-native-push-notification";
+import RNAmplitude, { init } from '@amplitude/analytics-react-native';
+import {AMPLITUDE_API_KEY, MAIL} from "./constants/strings";
 
 import Dashboard from "./src/screens/dashboard/dashboard";
 import WorkoutDetail from "./src/screens/dashboard/workoutDetail";
@@ -60,6 +62,7 @@ export default function App() {
     return createStore(rootReducer);
   }
   useEffect(() => {
+    amplitudeInit();
     if (requestUserPermission()) {
       getFcmToken();
     } else {
@@ -76,9 +79,23 @@ export default function App() {
     return unsubscribe;
   }, [])
 
+  const amplitudeInit = async() => {
+    await AsyncStorage.getItem("USER_ID").then(res => {
+      if (res) {
+        // init(AMPLITUDE_API_KEY, res);
+        // const amplitude = new RNAmplitude(AMPLITUDE_API_KEY);
+        // amplitude.setUserId(res);
+      }else {
+        // init(AMPLITUDE_API_KEY, "NOT_LOGGEDIN");
+      }
+  });
+  }
+
   PushNotification.popInitialNotification((notification) => {
-    console.log("popInitialNotification ", notification);
-    global.notification = notification;
+    if(notification) {
+      console.log("popInitialNotification ", notification);
+      global.notification = notification;
+    }
   })
 
   messaging().onNotificationOpenedApp(async (remoteMessage) => {
@@ -103,9 +120,7 @@ export default function App() {
     );
   };
   const getFcmToken = () => {
-    // Returns an FCM token for this device
     messaging().getToken().then((fcmToken) => {
-      console.log('FCM Token -> ', fcmToken);
       global.fcmtoken = fcmToken;
     });
   }
@@ -137,6 +152,7 @@ export default function App() {
         <Stack.Screen name="Category" component={Category} options={{ headerShown: false }} />
         <Stack.Screen name="ProductList" component={ProductList} options={{ headerShown: false }} />
         <Stack.Screen name="ProductDetails" component={ProductDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="Camera" component={Camera} options={{ headerShown: false }} />
       </Stack.Navigator>
     );
   }
@@ -165,6 +181,7 @@ export default function App() {
       <Stack.Navigator>
         <Stack.Screen name="FavoruitScreen" component={Favoruit} options={{ headerShown: false }} />
         <Stack.Screen name="ProductDetails" component={ProductDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="Camera" component={Camera} options={{ headerShown: false }} />
       </Stack.Navigator>
     );
   }

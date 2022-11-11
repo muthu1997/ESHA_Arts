@@ -43,7 +43,7 @@ export default function MyOrders(props) {
                     <View style={{ width: "100%", flexDirection: "row", justifyContent: "space-between", alignItems: "center" }}>
                         <Text title={item.orderItems.length + ' items'} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.BLACK }} />
                     </View>
-                    <Text title={item.orderItems.map(item => { return `${item.product.name}, ` })} type="ROBOTO_MEDIUM" lines={1} style={{ fontSize: 12, color: COLOUR.BLACK }} />
+                    <Text title={item.orderItems.map((item1, index) => { return `${item1.product?.name} ${index === (Number(item.orderItems.length) - 1) ? "" : ","}` })} type="ROBOTO_MEDIUM" lines={1} style={{ fontSize: 12, color: COLOUR.BLACK }} />
                 </View>
             </TouchableOpacity>
         )

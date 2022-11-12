@@ -258,7 +258,13 @@ export default function PaymentScreen(props) {
                         title={`Pay ₹${payType === "full" ? (totalCalculator("subtotal") + deliveryFees) : ((50 / 100) * (totalCalculator("subtotal") + deliveryFees))}`}
                         style={{ alignSelf: "center", margin: 20 }} /> */}
                         <Button
-                        onPress={() => dummyOrder()}
+                        onPress={() => {
+                            if(global.acceptOrder === true) {
+                                dummyOrder()
+                            }else {
+                                ToastAndroid.showWithGravity("We are facing some technical issue. Please try after some times.", ToastAndroid.CENTER, ToastAndroid.LONG);
+                            }
+                        }}
                         title={`Order Now`}
                         style={{ alignSelf: "center", margin: 20 }} />
                 </View>

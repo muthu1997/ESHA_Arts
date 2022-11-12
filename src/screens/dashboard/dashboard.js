@@ -153,6 +153,7 @@ export default function DashboardScreen(props) {
                 console.log(res)
                 let result = res.data;
                 setMascelinous(result);
+                global.acceptOrder = result.ORDER_A_STATUS;
                 if(result.APP_VERSION !== APP_VERSION) {
                     setVersionUpdate(true);
                 }

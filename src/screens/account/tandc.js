@@ -4,11 +4,11 @@ import * as COLOUR from "../../../constants/colors";
 import WebView from "react-native-webview";
 
 export default function TermsandConditions(props) {
-
+    const url = props.route.params.url;
     return (
         <View style={styles.container}>
              <WebView source={{
-                uri: 'https://sites.google.com/view/easha-chat/home'
+                uri: url
             }} />
         </View>
     )

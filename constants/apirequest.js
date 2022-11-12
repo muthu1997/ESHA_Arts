@@ -30,7 +30,7 @@ export const postFunction = async (url, data, callback) => {
             callback(res)
         })
         .catch(e => {
-            console.log(e)
+            console.log(e+" "+url)
             callback("error")
         })
 }

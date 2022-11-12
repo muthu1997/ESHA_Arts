@@ -1,5 +1,5 @@
 import React, { useState, useReducer, useEffect } from "react";
-import { View, StyleSheet, StatusBar, ScrollView, Dimensions, DeviceEventEmitter, FlatList, TouchableOpacity, LogBox, Linking } from "react-native";
+import { View, StyleSheet, StatusBar, ScrollView, Dimensions, SafeAreaView, FlatList, TouchableOpacity, LogBox, Linking } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Header from "../../../component/header";
 import TitleContainer from "../../../component/titleContainer";
@@ -79,7 +79,7 @@ export default function DashboardScreen(props) {
 
     const getTopPicksList = () => {
         getFunction('/products/gettoppick', res => {
-            console.log("dashboard")
+            console.log("getTopPicksList")
             if (res !== "error") {
                 dispatch(updateTopPick(res.data))
             }
@@ -88,7 +88,7 @@ export default function DashboardScreen(props) {
 
     const getFeaturedList = () => {
         getFunction('/products/gettoppick', res => {
-            console.log("dashboard")
+            console.log("getFeaturedList")
             if (res !== "error") {
                 dispatch(updateFeatured(res.data))
                 SplashScreen.hide();
@@ -98,7 +98,7 @@ export default function DashboardScreen(props) {
 
     function getFavList(_id) {
         getFunction(`/fav/${_id}`, res => {
-            console.log("dashboard")
+            console.log("getFavList")
             if (res.success === true) {
                 dispatch(updateFavoruitList(res.data))
             }
@@ -121,7 +121,7 @@ export default function DashboardScreen(props) {
 
     function getCartProductList(_id) {
         getFunction(`/cartproduct/${_id}`, res => {
-            console.log("dashboard")
+            console.log("getCartProductList")
             if (res !== "error") {
                 dispatch(updateCartProductList(res.data));
             }
@@ -153,7 +153,7 @@ export default function DashboardScreen(props) {
                 console.log(res)
                 let result = res.data;
                 setMascelinous(result);
-                global.acceptOrder = result.ORDER_A_STATUS;
+                global.acceptOrder = result.APP_ACCEPT_ORDER;
                 if(result.APP_VERSION !== APP_VERSION) {
                     setVersionUpdate(true);
                 }
@@ -235,6 +235,7 @@ export default function DashboardScreen(props) {
                 <View style={{ paddingBottom: 20 }}>
                     <FlatList
                         horizontal
+                        nestedScrollEnabled
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{ paddingLeft: 20 }}
                         data={getCategoryListData}
@@ -248,6 +249,7 @@ export default function DashboardScreen(props) {
                 <View style={{ paddingBottom: 20 }}>
                     <FlatList
                         horizontal
+                        nestedScrollEnabled
                         showsHorizontalScrollIndicator={false}
                         contentContainerStyle={{ paddingLeft: 20 }}
                         data={getTopPickData}
@@ -260,6 +262,7 @@ export default function DashboardScreen(props) {
                     title="Featured" />
                 <View style={{ paddingBottom: 20 }}>
                     <FlatList
+                    nestedScrollEnabled
                         showsVerticalScrollIndicator={false}
                         contentContainerStyle={{ paddingLeft: 20 }}
                         data={getFeatured}

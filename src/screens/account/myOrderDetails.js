@@ -26,7 +26,11 @@ export default function MyOrdersDetails(props) {
     useEffect(() => {
         getAddressById();
         let status = orderData.status === "PROCESSING" ? 0 : orderData.status === "INPROCESS" ? 1 : orderData.status === "PAYMENT" ? 2 : orderData.status === "SHIPMENT" ? 3 : orderData.status === "DELIVERED" ? 4 : 0
-        setOrderStatus(status)
+        if(orderData.amountDue === 0 && status === 3) {
+            setOrderStatus(2)
+        }else {
+            setOrderStatus(status)
+        }
         setIsAmountDue(orderData.amountDue > 0 ? false : true)
     }, [])
 
@@ -103,7 +107,7 @@ export default function MyOrdersDetails(props) {
 
     function renderProductCard(item, index) {
         return (
-            <View style={styles.pcardContainer}>
+            <View key={item._id} style={styles.pcardContainer}>
                 <View style={styles.imageContainer}>
                     <Image source={{ uri: item.product.image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
                 </View>

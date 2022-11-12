@@ -2,17 +2,26 @@
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:background="#FFFF"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:background="#079992"
     android:orientation="vertical">
 
-
-    <ImageView
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:scaleType="centerCrop"
+    <androidx.cardview.widget.CardView
+        android:layout_width="180dp"
+        android:layout_height="210dp"
+        android:layout_centerInParent="true"
         android:layout_centerHorizontal="true"
         android:layout_centerVertical="true"
-        android:src="@drawable/launch_screen" />
+        android:elevation="10dp"
+        app:cardCornerRadius="10dp"
+        app:cardElevation="10dp">
+
+        <ImageView
+            android:layout_width="180dp"
+            android:layout_height="210dp"
+            android:scaleType="centerCrop"
+            android:src="@drawable/launch_screen" />
+    </androidx.cardview.widget.CardView>
 
     <TextView
         android:id="@+id/textView"
@@ -20,8 +29,18 @@
         android:layout_height="match_parent"
         android:gravity="center|bottom"
         android:text="Easha Arts"
-        android:textColor="#000000"
-        android:textSize="20sp"
+        android:textColor="#FFFF"
+        android:textSize="25sp"
         android:layout_marginBottom="50dp"
         android:textStyle="bold" />
+    <TextView
+        android:id="@+id/textView1"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:gravity="center|bottom"
+        android:text="Hand made paintings with love and care!"
+        android:textColor="#FFFF"
+        android:textSize="14sp"
+        android:layout_marginBottom="25dp" />
+
 </RelativeLayout>

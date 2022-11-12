@@ -259,6 +259,7 @@ export default function PaymentScreen(props) {
                         style={{ alignSelf: "center", margin: 20 }} /> */}
                         <Button
                         onPress={() => {
+                            alert(global.acceptOrder)
                             if(global.acceptOrder === true) {
                                 dummyOrder()
                             }else {

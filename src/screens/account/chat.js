@@ -5,7 +5,6 @@ const { width } = Dimensions.get("screen");
 import { WebView } from 'react-native-webview';
 
 export default function ChatScreen(props) {
-    const [code, setCode] = useState("");
 
     return (
         <View style={styles.container}>

@@ -71,7 +71,7 @@ export default function MyAddress(props) {
                 renderItem={({ item, index }) => {
                     return renderAddressCard(item)
                 }}
-                keyExtractor={item => item.id}
+                keyExtractor={item => item._id}
                 showsVerticalScrollIndicator={false}
             /> }
         </View>

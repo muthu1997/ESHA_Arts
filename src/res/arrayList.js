@@ -23,3 +23,42 @@ export const PAUMENT_METHOD = [
         value: "direct"
     }
 ]
+
+export const PHOTO_SIZES = [
+    {
+        width: 22,
+        height: 28,
+        type: "INCH",
+        weight: "1KG"
+    },
+    {
+        width: 25,
+        height: 31,
+        type: "INCH",
+        weight: "1KG"
+    },
+    {
+        width: 29,
+        height: 35,
+        type: "INCH",
+        weight: "1KG"
+    },
+    {
+        width: 2.5,
+        height: 3.5,
+        type: "FEET",
+        weight: "1KG"
+    },
+    {
+        width: 3.5,
+        height: 4.5,
+        type: "FEET",
+        weight: "1KG"
+    },
+    {
+        width: 4.8,
+        height: 6.8,
+        type: "FEET",
+        weight: "1KG"
+    }
+]

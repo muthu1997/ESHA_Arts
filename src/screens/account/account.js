@@ -37,6 +37,11 @@ const options = [
         code: "tc"
     },
     {
+        id: 7,
+        name: "Privacy Policy",
+        code: "pp"
+    },
+    {
         id: 3,
         name: "Customer Support",
         code: "cs"
@@ -68,8 +73,8 @@ export default function CartScreen(props) {
             props.navigation.navigate("MyOrders");
         } else if (item.code === "rq") {
             props.navigation.navigate("Query");
-        } else if (item.code === "tc") {
-            props.navigation.navigate("Terms");
+        } else if (item.code === "tc" || item.code === "pp") {
+            props.navigation.navigate("Terms", {url: item.code === "tc" ? 'https://sites.google.com/view/easha-chat/home' : 'https://sites.google.com/view/eashappolicy/home'});
         } else if (item.code === "ep") {
             props.navigation.navigate("EditProfile");
         } else if (item.code === "cs") {

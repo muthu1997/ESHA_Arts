@@ -162,7 +162,7 @@ export default function Corousal(props) {
                             <Icon name="heart" size={20} color={favFilter} />
                         </TouchableOpacity> :
                         <TouchableOpacity activeOpacity={0.8} style={{ width: 35, height: 35, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center", position: "absolute", top: 10, right: 10 }}>
-                            <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{ width: 30, height: 30 }} />
+                            <Lottie source={require('../../../constants/btnloader.json')} autoPlay loop style={{ width: 30, height: 30 }} />
                         </TouchableOpacity>}
 
                     {/* <TouchableOpacity style={styles.camButton} onPress={() => shareProductFunction()} activeOpacity={0.9}>

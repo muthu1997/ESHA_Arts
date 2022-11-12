@@ -55,7 +55,6 @@ export default function MyOrders(props) {
                 back
                 onGoBack={() => props.navigation.goBack()}
                 title="My Orders"
-                style={{ backgroundColor: "transparent" }}
             />
             {loading ?
                 <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>

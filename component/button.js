@@ -25,7 +25,7 @@
           }
           }} style={[styles.button,{backgroundColor: this.props.loading ? COLOUR.WHITE : COLOUR.PRIMARY}, this.props.style]}>
             {this.props.loading ? 
-            <Lottie source={require('../constants/loader.json')} autoPlay loop style={{width: 50, height: 50}} />
+            <Lottie source={require('../constants/btnloader.json')} autoPlay loop style={{width: 50, height: 50}} />
              : <Text type="ROBOTO_MEDIUM" style={[styles.btntxt, this.props.textStyle]}>{this.props.title}</Text>}
          </TouchableOpacity>
      )

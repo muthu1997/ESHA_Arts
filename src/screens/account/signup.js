@@ -1,20 +1,26 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Dimensions, ToastAndroid, TouchableOpacity, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, Dimensions, ToastAndroid, TouchableOpacity } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Text from "../../../component/text";
 import Button from "../../../component/button";
 import Input from "../../../component/inputBox";
-import { postFunction, getFunction } from "../../../constants/apirequest";
+import {postMethod, putMethod} from "../../../utils/function";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { SIGNUP_INIT, SIGNUP_FAILURE, SIGNUP_SUCCESS } from "../../../utils/events";
 
 export default function Signup(props) {
     const [name, setName] = useState("");
     const [mobile, setMobile] = useState("");
-    const [ccode, setCCode] = useState("");
+    const [ccode, setCCode] = useState("+91");
     const [password, setPassword] = useState("");
     const [mail, setMail] = useState("");
     const [btnLoader, setBtnLoader] = useState(false);
+
+    useEffect(() => {
+        updateAFEvent(SIGNUP_INIT, "");
+    }, [])
 
     function signupFunction() {
         if (password != "" && password.length < 8) {
@@ -24,28 +30,30 @@ export default function Signup(props) {
                 setBtnLoader(true)
                 var data = {
                     name: name,
-                    phone: mobile,
+                    phone: Number(mobile),
                     email: mail,
                     passwordHash: password,
                     country_code: ccode,
                     status: "PENDING"
                 }
-                postFunction('/user/add', data, res => {
-                    if (res.success === true) {
+                postMethod('/user/add', JSON.stringify(data)).then(res => {
+                    console.log(res)
                         setMobile("");
                         setName("");
                         setMail("");
                         setPassword("");
                         setBtnLoader(false)
+                        updateAFEvent(SIGNUP_SUCCESS, "");
                         global.isFromSignup = true;
-                        props.navigation.navigate("OTPScreen");
-                    } else {
-                        ToastAndroid.showWithGravity(res.message, ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        setBtnLoader(false)
-                    }
+                        return props.navigation.navigate("OTPScreen", {data: res.data.phone, id: res.data._id});
+                }).catch(error => {
+                    console.log(error.response)
+                    ToastAndroid.showWithGravity(error?.response?.data?.message, ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    setBtnLoader(false)
+                    return updateAFEvent(SIGNUP_FAILURE, {"ERROR_DATA": error});
                 })
             } else {
-                ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+               return  ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
             }
         }
     }
@@ -74,7 +82,6 @@ export default function Signup(props) {
                     placeholder="Mobile Number"
                     value={mobile}
                     country={true}
-                    onBlur={data => setCCode(data)}
                     onChangeText={data => setMobile(data)}
                     style={[styles.inputStyle, { width: "100%" }]} />
                 <Input

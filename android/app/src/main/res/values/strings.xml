@@ -1,3 +1,8 @@
 <resources>
-    <string name="app_name">EASHA ARTS</string>
+    <string name="app_name">Handmade Paintings</string>
+    <string name="handmade_paintings">Handmade Paintings</string>
+    <string name="version_1_0_0">Version 1.0.0</string>
+    <string name="developed_and_maintained_by_fruition_soft_tech">Developed and maintained by Fruition Soft Tech</string>
+    <string name="main_splash_screen_image">main splash screen image</string>
+    <string name="todo">TODO</string>
 </resources>

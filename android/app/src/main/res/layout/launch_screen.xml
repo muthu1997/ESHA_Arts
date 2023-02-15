@@ -1,46 +1,43 @@
 <?xml version="1.0" encoding="utf-8"?>
 <RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    android:background="#079992"
-    android:orientation="vertical">
+    android:background="#FFFF">
 
-    <androidx.cardview.widget.CardView
-        android:layout_width="180dp"
-        android:layout_height="210dp"
-        android:layout_centerInParent="true"
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
         android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:text="@string/developed_and_maintained_by_fruition_soft_tech"
+        android:textColor="#079992"
+        android:textAppearance="@style/TextAppearance.AppCompat"
+        android:id="@+id/splashdesc"
+        android:layout_alignParentBottom="true"
+        android:paddingHorizontal="25dp"
+        android:textSize="11sp"
+        android:layout_marginBottom="40dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:paddingBottom="10dp"
+        android:layout_centerHorizontal="true"
+        android:gravity="center"
+        android:textAppearance="@style/TextAppearance.AppCompat"
+        android:paddingHorizontal="25dp"
+        android:text="@string/version_1_0_0"
+        android:layout_above="@id/splashdesc"
+        android:textSize="11sp"
+        android:textColor="#079992" />
+
+    <ImageView
+        android:id="@+id/imageView"
+        android:layout_width="150dp"
+        android:layout_height="150dp"
+        android:src="@drawable/handmade_logo"
         android:layout_centerVertical="true"
-        android:elevation="10dp"
-        app:cardCornerRadius="10dp"
-        app:cardElevation="10dp">
-
-        <ImageView
-            android:layout_width="180dp"
-            android:layout_height="210dp"
-            android:scaleType="centerCrop"
-            android:src="@drawable/launch_screen" />
-    </androidx.cardview.widget.CardView>
-
-    <TextView
-        android:id="@+id/textView"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center|bottom"
-        android:text="Easha Arts"
-        android:textColor="#FFFF"
-        android:textSize="25sp"
-        android:layout_marginBottom="50dp"
-        android:textStyle="bold" />
-    <TextView
-        android:id="@+id/textView1"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:gravity="center|bottom"
-        android:text="Hand made paintings with love and care!"
-        android:textColor="#FFFF"
-        android:textSize="14sp"
-        android:layout_marginBottom="25dp" />
+        android:layout_centerHorizontal="true" />
 
 </RelativeLayout>

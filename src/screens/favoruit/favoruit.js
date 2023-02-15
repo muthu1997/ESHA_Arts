@@ -4,12 +4,11 @@ import * as COLOUR from "../../../constants/colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import Header from "../../../component/header";
 import Text from "../../../component/text";
-import { getFunction, deleteFunction } from "../../../constants/apirequest";
+import { deleteMethod } from "../../../utils/function";
 const { width } = Dimensions.get("screen");
 import { updateFavProductList, updateFavoruitList } from "../../redux/action";
 import { useSelector, useDispatch } from 'react-redux';
 import Lottie from 'lottie-react-native';
-import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
 
 export default function FavoruitScreen(props) {
     const favList = useSelector(state => state.reducer.favoruit_list);
@@ -22,50 +21,39 @@ export default function FavoruitScreen(props) {
     const dispatch = useDispatch();
 
     useEffect(() => {
-        if (user) {
+        if (user !== "") {
             getFavoruitList();
+            setLoggedOut(false);
         } else {
             setLoggedOut(true)
         }
     }, [])
 
     DeviceEventEmitter.addListener("REFRESH_CART", res => {
-        if(res === "yes") {
+        if (res === "yes") {
             setTimeout(() => {
                 DeviceEventEmitter.emit("REFRESH_CART", "no")
-            },1000)
+            }, 1000)
             setLoggedOut(false)
             if (user) {
                 getFavoruitList();
             }
         }
-        if(res === "logout") {
+        if (res === "logout") {
             setTimeout(() => {
                 DeviceEventEmitter.emit("REFRESH_CART", "no")
-            },1000)
+            }, 1000)
             setLoggedOut(true)
         }
     })
 
     function getFavoruitList() {
-        getFunction(`/fav/productlist/${user._id}`, res => {
-            if (res.success === true) {
-                dispatch(updateFavProductList(res.data))
-                AmplitudeTrack("FAV_COUNT", {number: res.data?.length})
-            }
+        dispatch(updateFavProductList(user._id)).then(res => {
+            console.log(res)
             setLoader(false);
             setFavLoader(false);
             setCurrentLoader("")
-            getFavList();
-        })
-    }
-
-    function getFavList() {
-        getFunction(`/fav/${user._id}`, res => {
-            console.log("fav")
-            if (res.success === true) {
-                dispatch(updateFavoruitList(res.data))
-            }
+            dispatch(updateFavoruitList(user._id))
         })
     }
 
@@ -73,33 +61,29 @@ export default function FavoruitScreen(props) {
         setFavLoader(true);
         setCurrentLoader(productId)
         let favFilter = favList.filter(x => x.itemId === productId)
-        deleteFunction(`/fav/${favFilter[0]._id}`, res => {
+        deleteMethod(`/fav/${favFilter[0]._id}`).then(res => {
             getFavoruitList();
-            AmplitudeTrack("DELETE_FAV", {product: favFilter[0]._id})
         })
     }
 
     function renderFavoruitCard(item, index) {
         return (
             <View style={styles.cardContainer}>
-                <View style={{ width: "100%", height: 20, justifyContent: "center" }}>
-
-                </View>
-                <TouchableOpacity activeOpacity={0.8} onPress={() => props.navigation.navigate("ProductDetails", { data: item })} style={styles.imageContainer}>
-                    <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+                <View style={{ width: "100%", height: 10, justifyContent: "center" }} />
+                <TouchableOpacity activeOpacity={0.8} onPress={() => props.navigation.navigate("ProductDetails", { id: item._id })} style={styles.imageContainer}>
+                    <Image source={{ uri: item?.image[0].image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
                 </TouchableOpacity>
                 <View style={styles.dataContainer}>
                     <Text title={item.name} type="ROBOTO_MEDIUM" lines={1} />
-                    <View style={{ width: "100%", alignItems: "center", justifyContent: "space-between", flexDirection: "row" }}>
-                        <Text title={`₹ ${item.price}`} type="ROBO_BOLD" lines={2} style={{ color: COLOUR.PRIMARY }} />
-                        {!favLoader || currentLoader !== item._id ? <TouchableOpacity onPress={() => deleteFavProduct(item._id)} activeOpacity={0.8} style={{ width: 35, height: 35, marginVertical: 5, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                            <Icon name="heart" size={20} color={COLOUR.RED} />
-                        </TouchableOpacity> :
-                            <TouchableOpacity activeOpacity={0.8} style={{ width: 35, height: 35, marginVertical: 5, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
-                                <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{ width: 30, height: 30 }} />
-                            </TouchableOpacity>}
-                    </View>
                 </View>
+                {/* <View style={{ width: "100%", alignItems: "center", justifyContent: "space-between", flexDirection: "row", position: "absolute", top: 0, left: 0 }}>
+                    {!favLoader || currentLoader !== item._id ? <TouchableOpacity onPress={() => deleteFavProduct(item._id)} activeOpacity={0.8} style={{ width: 35, height: 35, marginVertical: 5, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
+                        <Icon name="heart" size={20} color={COLOUR.RED} />
+                    </TouchableOpacity> :
+                        <TouchableOpacity activeOpacity={0.8} style={{ width: 35, height: 35, marginVertical: 5, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center" }}>
+                        <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
+                        </TouchableOpacity>}
+                </View> */}
             </View>
         )
     }
@@ -109,12 +93,12 @@ export default function FavoruitScreen(props) {
             <StatusBar backgroundColor={COLOUR.WHITE} barStyle={"dark-content"} />
             <Header
                 style={{ backgroundColor: "transparent" }}
-                singleTitle="Favoruit Photos" />
+                singleTitle="Favoruit Products" />
             {!loggedOut ?
                 <View style={{ flex: 1, alignItems: "center" }}>
                     {loader ?
                         <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                            <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{ width: 200, height: 200 }} />
+                        <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
                             <Text title={"Loading..."} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
                         </View> :
                         <FlatList
@@ -158,7 +142,9 @@ const styles = StyleSheet.create({
         height: width / 2.5,
     },
     dataContainer: {
-        width: "100%"
+        width: "100%",
+        alignItems: "center",
+        paddingBottom: 5
     },
     logoutContainer: {
         alignItems: "center",

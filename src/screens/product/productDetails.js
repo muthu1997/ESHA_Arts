@@ -1,92 +1,135 @@
 import React, { useState, useEffect } from "react";
-import { View, StyleSheet, Image, StatusBar, Dimensions, TouchableOpacity, ToastAndroid, ScrollView } from "react-native";
+import { View, StyleSheet, Image, Dimensions, TouchableOpacity, ToastAndroid, ScrollView, Touchable } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
+import MIcon from "react-native-vector-icons/MaterialIcons";
 import Header from "../../../component/header";
 import Text from "../../../component/text";
 import Button from "../../../component/button";
-const { width, height } = Dimensions.get("screen");
+const { height, width } = Dimensions.get("screen");
 import Lottie from 'lottie-react-native';
 import { useSelector, useDispatch } from 'react-redux';
-import { updateFavoruitList, updateFavProductList, updateCartList, updateCartProductList } from "../../redux/action";
-import { postFunction, getFunction, deleteFunction } from "../../../constants/apirequest";
+import { updateFavoruitList, updateFavProductList, removeFromCart, addToCart } from "../../redux/action";
+import { postMethod, deleteMethod } from "../../../utils/function";
 import ImageZoom from 'react-native-image-pan-zoom';
-import RNFetchBlob from 'rn-fetch-blob'
+import TitleContainer from "../../../component/titleContainer";
+import { getMethod } from "../../../utils/function";
+import RNSingleSelect, {
+    ISingleSelectDataType,
+} from "@freakycoder/react-native-single-select";
 import Share from 'react-native-share';
-import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
+import Star from "react-native-star-view";
 
+const starCount = [0, 1, 2, 3, 4];
 export default function Corousal(props) {
-    const [getParam, setParam] = useState(props.route.params.data);
     const [deleteFav, setDeleteFav] = useState("");
     const [favFilter, setFaveFilter] = useState(props.route.params.data);
     const user = useSelector(state => state.reducer.profile);
     const favList = useSelector(state => state.reducer.favoruit_list);
     const cartList = useSelector(state => state.reducer.cart_list);
+    const sizeListData = useSelector(state => state.reducer.image_size);
+    const [sizeList, setSizeListData] = useState([]);
     const [favLoader, setFavLoader] = useState(false);
+    const [getSizeList, setSizeList] = useState([]);
     const [getCartLoader, setCartLoader] = useState(false);
+    const [imagePreview, setImagePreview] = useState(false);
+    const [selectedImage, setSelectedImage] = useState("");
+    const [selectedSize, setSelectedSize] = useState("");
+    const [loader, setLoader] = useState(true);
+    const [getParam, setParams] = useState({});
+    const [getProductRatings, setProductRatings] = useState([]);
+    const [productRatingStatus, setProductRatingStatus] = useState(0);
+    const [productRatingCount, setProductRatingCount] = useState(0);
+    const [productReviewCount, setProductReviewCount] = useState(0);
     const dispatch = useDispatch();
 
     useEffect(() => {
-        let favFilter = favList.filter(x => x.itemId === getParam._id).length
-        setFaveFilter(favFilter > 0 ? COLOUR.RED : COLOUR.GRAY)
+        getProductDetails(props.route.params.id);
     }, [])
+
+    const getProductDetails = async (id) => {
+        console.log(id)
+        return await new Promise.all([getMethod(`/productid/${id}`), getMethod(`/review/${id}`)]).then(res => {
+            let response = res[0];
+            setParams(response.data[0])
+            let getParam = response.data[0];
+            let sizeList = sizeListData.filter(x => x.size_type === getParam.imageType);
+            setSizeListData(sizeList);
+            let favFilter = favList?.filter(x => x.itemId === getParam._id).length
+            setFaveFilter(favFilter > 0 ? COLOUR.RED : COLOUR.GRAY);
+            if (sizeList.length > 0) {
+                let result = new Array();
+                sizeList.forEach((element) => {
+                    result.push({
+                        id: element._id,
+                        value: element.size_title,
+                        data: {
+                            height: element.height,
+                            width: element.width,
+                            length: element.length,
+                            price: element.price
+                        }
+                    })
+                });
+                setSizeList(result);
+                setSelectedSize(result[0]);
+            }
+            //product ratings and reviews response handling
+            let reviewedStatus = res[1].data;
+            if (reviewedStatus.length > 0) {
+                setProductRatings(reviewedStatus);
+                setProductRatingCount(reviewedStatus.length);
+                setProductReviewCount(reviewedStatus.filter(x => x.description !== "").length);
+                let fivestar = reviewedStatus.filter(x => x.rating === 5).length;
+                let fourstar = reviewedStatus.filter(x => x.rating === 4).length;
+                let threestar = reviewedStatus.filter(x => x.rating === 3).length;
+                let twostar = reviewedStatus.filter(x => x.rating === 2).length;
+                let onestar = reviewedStatus.filter(x => x.rating === 1).length;
+                let topCalcuator = (Number(fivestar) * 5) + (Number(fourstar) * 4) + (Number(threestar) * 3) + (Number(twostar) * 2) + (Number(onestar) * 1);
+                let bottomCalcuator = Number(fivestar) + Number(fourstar) + Number(threestar) + Number(twostar) + Number(onestar);
+                let final_rating = Number(topCalcuator) / Number(bottomCalcuator);
+                setProductRatingStatus(final_rating)
+            }
+            return setTimeout(() => {
+                setLoader(false);
+            }, 200)
+        }).catch(err => {
+            console.log(err);
+            return setLoader(false);
+        })
+    }
 
     async function updateFavoruitProduct(id) {
         setFavLoader(true);
         var data = { itemId: id, userId: user._id }
-        postFunction('/fav/new', data, res => {
-            console.log(res)
-            if (res.success === true) {
-                getFavList();
-                getFavoruitList();
-            } else {
-                setFavLoader(false);
-            }
-        })
-    }
-
-    async function shareProductFunction() {
-        let options = {
-            message: "Hey there!, I",
-            url: "https://cdn.pixabay.com/photo/2015/04/23/22/00/tree-736885__480.jpg"
-        }
-        Share.open(options)
-            .then((res) => {
-                console.log(res);
-            })
-            .catch((err) => {
-                err && console.log(err);
-            });
-    }
-
-    function getFavList() {
-        getFunction(`/fav/${user._id}`, res => {
-            if (res.success === true) {
-                dispatch(updateFavoruitList(res.data))
-                let favFilter = res.data.filter(x => x.itemId === getParam._id).length
+        console.log(data)
+        postMethod('/fav/new', data).then(res => {
+            dispatch(updateFavoruitList(user._id)).then(response => {
+                console.log(response)
+                let favFilter = response.filter(x => x.itemId === getParam._id).length
                 setFaveFilter(favFilter > 0 ? COLOUR.RED : COLOUR.GRAY)
-            }
+                setFavLoader(false);
+            })
+            dispatch(updateFavProductList(user._id))
+        }).catch(error => {
             setFavLoader(false);
-        })
-    }
-
-    function getFavoruitList() {
-        getFunction(`/fav/productlist/${user._id}`, res => {
-            if (res.success === true) {
-                dispatch(updateFavProductList(res.data))
-                AmplitudeTrack("FAV_COUNT", {number: res.data?.length})
-            }
         })
     }
 
     function deleteFavProduct() {
         setFavLoader(true);
         let favFilter = favList.filter(x => x.itemId === getParam._id)
-        deleteFunction(`/fav/${favFilter[0]._id}`, res => {
-            AmplitudeTrack("DELETE_FAV", {product: favFilter[0]._id})
+        deleteMethod(`/fav/${favFilter[0]._id}`).then(res => {
             setDeleteFav("Done")
-            getFavList();
-            getFavoruitList();
+            dispatch(updateFavoruitList(user._id)).then(response => {
+                console.log(response)
+                let favFilter = response.filter(x => x.itemId === getParam._id).length
+                setFaveFilter(favFilter > 0 ? COLOUR.RED : COLOUR.GRAY)
+                setFavLoader(false);
+            })
+            return dispatch(updateFavProductList(user._id))
+        }).catch(error => {
+            return ToastAndroid.show("Something went wrong. Please try again later.")
         })
     }
 
@@ -94,58 +137,71 @@ export default function Corousal(props) {
         if (user) {
             setCartLoader(true);
             var data = { itemId: getParam._id, userId: user._id, quantity: 1 }
-            postFunction('/cart/new', data, res => {
-                if (res.success === true) {
-                    getCartList();
-                    getCartProductList();
-                    AmplitudeTrack("ADD_CART", {product: getParam._id})
-                }
+            dispatch(addToCart(data)).then(response => {
+                ToastAndroid.show("Item added to cart.", ToastAndroid.CENTER, ToastAndroid.CENTER)
+                setTimeout(() => {
+                    setCartLoader(false);
+                }, 1000)
+            }).catch(error => {
+                ToastAndroid.show(error, ToastAndroid.CENTER, ToastAndroid.CENTER)
             })
         } else {
             ToastAndroid.show("Please login to add this product to cart list.", ToastAndroid.CENTER, ToastAndroid.CENTER)
         }
     }
 
-    function getCartProductList() {
-        getFunction(`/cartproduct/${user._id}`, res => {
-            if (res !== "error") {
-                dispatch(updateCartProductList(res.data));
-            }
-        })
-    }
-
-    const getCartList = () => {
-        getFunction(`/cart/${user._id}`, res => {
-            if (res !== "error") {
-                setCartLoader(false);
-                dispatch(updateCartList(res.data))
-                AmplitudeTrack("CART_LIST", {number: res.data?.length})
-            }
-        })
-    }
 
     function deleteCartProduct() {
         setCartLoader(true);
         let cartData = cartList.filter(x => x.itemId === getParam._id)
-        deleteFunction(`/cart/${cartData[0]._id}`, res => {
-            if (res.success === true) {
-                getCartList();
-                AmplitudeTrack("DELETE_CART_PRODUCT", {product: cartData[0]._id})
-            }
+        console.log(cartData[0]._id)
+        dispatch(removeFromCart(cartData[0]._id, user._id)).then(response => {
+            ToastAndroid.show("Item removed from cart.", ToastAndroid.CENTER, ToastAndroid.CENTER)
+            setTimeout(() => {
+                setCartLoader(false);
+            }, 1000)
+        }).catch(error => {
+            ToastAndroid.show("Something went wrong. Please try again later.", ToastAndroid.BOTTOM, ToastAndroid.CENTER)
         })
     }
 
+    if (loader) {
+        return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
+            <Text title={"Loading..."} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
+        </View>
+    }
+    if (imagePreview) {
+        return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <ImageZoom
+                cropWidth={Dimensions.get('window').width}
+                cropHeight={height - 100}
+                imageWidth={width}
+                panToMove={true}
+                imageHeight={height / 2}>
+                <Image source={{ uri: selectedImage }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+            </ImageZoom>
+            <TouchableOpacity onPress={() => { setImagePreview(false); setSelectedImage("") }} activeOpacity={1} style={{ width: 30, height: 30, alignItems: "center", justifyContent: "center", position: "absolute", top: 10, right: 10 }}>
+                <Icon name="close" size={25} />
+            </TouchableOpacity>
+        </View>
+    }
     return (
         <View style={styles.container}>
-            <StatusBar backgroundColor={COLOUR.BACKGROUND} barStyle="dark-content" />
-            <ScrollView>
+            <Header
+                back
+                onGoBack={() => props.navigation.goBack()} />
+            <ScrollView nestedScrollEnabled>
                 <View style={styles.imageContainer}>
-                    <ImageZoom cropWidth={Dimensions.get('window').width}
-                        cropHeight={height / 2}
-                        imageWidth={height / 3}
-                        imageHeight={height / 3}>
-                        <Image source={{ uri: getParam.image }} style={styles.imageStyle} resizeMode="contain" />
-                    </ImageZoom>
+                    <ScrollView horizontal pagingEnabled showsHorizontalScrollIndicator={false}>
+                        {getParam.image && getParam.image.map((item, index) => {
+                            return <TouchableOpacity key={index} onPress={() => { setSelectedImage(item.image); setImagePreview(true) }} activeOpacity={1} style={{ width: width, alignItems: "center", justifyContent: "center" }}>
+                                <Image source={{ uri: item.image }} style={styles.imageStyle} resizeMode="contain" />
+                                <Text title={`${index + 1} / ${getParam.image.length}`} type="ROBO_REGULAR" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY, position: "absolute", top: 5, left: 5 }]} />
+                            </TouchableOpacity>
+                        })}
+                    </ScrollView>
+
                     {!favLoader ?
                         <TouchableOpacity onPress={() => {
                             console.log("clicked")
@@ -164,22 +220,25 @@ export default function Corousal(props) {
                         <TouchableOpacity activeOpacity={0.8} style={{ width: 35, height: 35, backgroundColor: COLOUR.WHITE, elevation: 2, borderRadius: 20, alignItems: "center", justifyContent: "center", position: "absolute", top: 10, right: 10 }}>
                             <Lottie source={require('../../../constants/btnloader.json')} autoPlay loop style={{ width: 30, height: 30 }} />
                         </TouchableOpacity>}
-
-                    {/* <TouchableOpacity style={styles.camButton} onPress={() => shareProductFunction()} activeOpacity={0.9}>
-                    <Icon name="share" size={20} color={favFilter} />
-                </TouchableOpacity> */}
                 </View>
                 <View style={{ flex: 1, paddingHorizontal: 20 }}>
-                    <Text title={getParam.name} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
-                    <Text title={getParam.description} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.DARK_GRAY, marginVertical: 10 }]} />
-                    <View style={styles.dimensionContainer}>
+                    <Text title={getParam.name} type="LOUIS_LIGHT" style={[styles.catText, { color: COLOUR.BLACK, fontSize: 20 }]} />
+                    {getProductRatings.length > 0 ? <View style={styles.starContainer}>
+                        {
+                            starCount.map(item => {
+                                return <Icon key={item} name={item === 4 ? "star-half-full" : "star"} color={COLOUR.PRIMARY} size={15} />
+                            })
+                        }
+                        <Text title={getProductRatings.length} type="ROBO_REGULAR" lines={2} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 12 }]} />
+                    </View> : null}
+                    {getParam.width !== "" ? <View style={styles.dimensionContainer}>
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
                             <TouchableOpacity style={styles.iconButton} activeOpacity={0.9}>
                                 <Icon name="arrow-expand-horizontal" size={20} color={COLOUR.WHITE} />
                             </TouchableOpacity>
                             <View>
                                 <Text title={"Width"} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 12 }]} />
-                                <Text title={`${getParam.width} ${getParam.type}`} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 14 }]} />
+                                <Text title={`${getParam?.width} ${getParam?.whType}`} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 14 }]} />
                             </View>
                         </View>
                         <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
@@ -188,26 +247,20 @@ export default function Corousal(props) {
                             </TouchableOpacity>
                             <View>
                                 <Text title={"Height"} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 12 }]} />
-                                <Text title={`${getParam.height} ${getParam.type}`} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 14 }]} />
+                                <Text title={`${getParam?.height} ${getParam?.whType}`} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 14 }]} />
                             </View>
                         </View>
-                        <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "center" }}>
-                            <TouchableOpacity style={styles.iconButton} activeOpacity={0.9}>
-                                <Icon name="pine-tree" size={20} color={COLOUR.WHITE} />
-                            </TouchableOpacity>
-                            <View>
-                                <Text title={"Frame"} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 12 }]} />
-                                <Text title={`Wood`} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, paddingHorizontal: 10, fontSize: 14 }]} />
-                            </View>
-                        </View>
-                    </View>
-
+                    </View> : null}
                     <View style={{ flexDirection: "row", alignItems: "center", justifyContent: "space-between", width: "100%", height: 75, marginVertical: 10 }}>
                         <View>
                             <Text title={`Price`} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 12 }]} />
-                            <Text title={'₹ ' + getParam.price} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 22 }]} />
+                            <Text title={'₹ ' + getParam?.mrp} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.GRAY, fontSize: 22, textDecorationLine: 'line-through' }]} />
                         </View>
-                        {cartList.filter(x => x.itemId === getParam._id).length > 0 ?
+                        <View>
+                            <Text title={``} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 12 }]} />
+                            <Text title={'₹ ' + getParam?.price} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 22 }]} />
+                        </View>
+                        {cartList?.filter(x => x.itemId === getParam._id).length > 0 ?
                             <Button
                                 title="Remove From Cart"
                                 loading={getCartLoader}
@@ -219,6 +272,51 @@ export default function Corousal(props) {
                                 onPress={() => addCartList()}
                                 style={{ width: "55%" }} />}
                     </View>
+                    <Text title={getParam.description} type="ROBOTO_MEDIUM" style={[styles.catText, { color: COLOUR.DARK_GRAY, marginVertical: 10 }]} />
+                    {getParam.specification ?
+                        <View style={styles.specificationContainer}>
+                            <TitleContainer
+                                title={"Specifications"} style={{ paddingHorizontal: 0 }} />
+                            <Text title={getParam.specification} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.DARK_GRAY, marginVertical: 10 }]} />
+                        </View> : null}
+                    <View style={styles.sellerContainer}>
+                        <TitleContainer
+                            small={true}
+                            title={"Sold By"}
+                            secondaryTitle={getParam.productOwner?.shopName}
+                            secStyle={{ color: COLOUR.BLUE }}
+                            style={{ paddingHorizontal: 0 }} />
+                    </View>
+                    {getProductRatings.length > 0 ?
+                        <View style={styles.starRatingContainer}>
+                            <TitleContainer
+                                small={true}
+                                title={"Ratings & Reviews"}
+                                style={{ paddingHorizontal: 0 }} />
+                            <Text title={productRatingStatus > 4 ? "Very Good" : productRatingStatus > 3 ? "Good" : productRatingStatus > 2 ? "Average" : "OK"} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.PRIMARY, marginVertical: 5, fontSize: 16 }]} />
+                            <Star score={productRatingStatus} />
+                            <Text title={`${productRatingCount} ratings and ${productReviewCount} reviews`} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.DARK_GRAY, marginVertical: 5, fontSize: 12 }]} />
+                        </View> : null}
+                    {getProductRatings.length > 0 ?
+                        <View style={styles.reviewContainer}>
+                            {
+                                getProductRatings.filter(x => x.description !== "")?.map(item => {
+                                    return <View style={styles.reviewContent} key={item._id}>
+                                        <View style={{ flexDirection: "row" }}>
+                                            {
+                                                item.image?.map((item1, index) => <TouchableOpacity onPress={() => { setSelectedImage(item1.image); setImagePreview(true) }} activeOpacity={1} style={{ marginRight: 5 }} key={index}><Image source={{ uri: item1.image }} resizeMode="contain" style={styles.reviewImage} /></TouchableOpacity>)
+                                            }
+                                        </View>
+                                        <Text title={`${item.description}`} lines={4} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.DARK_GRAY, marginVertical: 5, fontSize: 12 }]} />
+                                        <Text title={`${item.userId.name}`} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.DARK_GRAY, fontSize: 10 }]} />
+                                        <View style={{ flexDirection: "row", alignItems: "center" }}>
+                                            <MIcon name="verified" color={COLOUR.GREEN} size={15} />
+                                            <Text title={`Verified Purchase`} type="ROBO_REGULAR" style={[styles.catText, { color: COLOUR.GREEN, fontSize: 10 }]} />
+                                        </View>
+                                    </View>
+                                })
+                            }
+                        </View> : null}
                 </View>
             </ScrollView>
         </View>
@@ -261,7 +359,7 @@ const styles = StyleSheet.create({
         height: 75,
         flexDirection: "row",
         alignItems: "center",
-        justifyContent: "space-around"
+        justifyContent: "space-between"
     },
     iconButton: {
         width: 45,
@@ -271,5 +369,43 @@ const styles = StyleSheet.create({
         elevation: 1,
         alignItems: "center",
         justifyContent: "center"
+    },
+    sizeContainer: {
+        width: "100%",
+    },
+    starContainer: {
+        width: "100%",
+        paddingVertical: 10,
+        flexDirection: "row",
+        alignItems: "center"
+    },
+    specificationContainer: {
+        width: "100%",
+        borderTopColor: COLOUR.LIGHTGRAY,
+        borderTopWidth: 2
+    },
+    sellerContainer: {
+        width: "100%",
+        borderTopColor: COLOUR.LIGHTGRAY,
+        borderTopWidth: 2
+    },
+    starRatingContainer: {
+        width: "100%",
+        borderTopColor: COLOUR.LIGHTGRAY,
+        borderTopWidth: 2,
+        paddingBottom: 10
+    },
+    reviewContainer: {
+        width: "100%"
+    },
+    reviewContent: {
+        width: "100%",
+        paddingVertical: 5,
+        borderBottomWidth: 0.5,
+        borderColor: COLOUR.GRAY
+    },
+    reviewImage: {
+        width: 60,
+        height: 60
     }
 })

@@ -12,16 +12,16 @@ export const PAUMENT_TYPE = [
 ]
 
 export const PAUMENT_METHOD = [
-    // {
-    //     id: 1,
-    //     title: "Razor Pay",
-    //     value: "razorpay"
-    // },
     {
-        id: 2,
-        title: "Direct Payment",
-        value: "direct"
-    }
+        id: 1,
+        title: "Online Payment",
+        value: "razorpay"
+    },
+    // {
+    //     id: 2,
+    //     title: "Direct Payment",
+    //     value: "direct"
+    // }
 ]
 
 export const PHOTO_SIZES = [

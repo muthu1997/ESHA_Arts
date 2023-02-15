@@ -1,33 +1,33 @@
 {
   "project_info": {
-    "project_number": "140290660872",
-    "project_id": "easha-3c1b2",
-    "storage_bucket": "easha-3c1b2.appspot.com"
+    "project_number": "279832642801",
+    "project_id": "handmade-paints-customer",
+    "storage_bucket": "handmade-paints-customer.appspot.com"
   },
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:140290660872:android:aa8181c572093a76d1cfbd",
+        "mobilesdk_app_id": "1:279832642801:android:06e07cfdd722ea5d00d550",
         "android_client_info": {
-          "package_name": "com.eashaarts.mobile"
+          "package_name": "com.handmade.paintings.mobile"
         }
       },
       "oauth_client": [
         {
-          "client_id": "140290660872-ghp74qgafgpqfigk6sa0mq9lgilosvae.apps.googleusercontent.com",
+          "client_id": "279832642801-cqqf5ov3qdi8u4m6089p686tge22i0i5.apps.googleusercontent.com",
           "client_type": 3
         }
       ],
       "api_key": [
         {
-          "current_key": "AIzaSyCh_QY387-TXZ3ls5XOZ1_urn3-h_7Qos8"
+          "current_key": "AIzaSyDj-jwlLcDZsU2TUbPI46mLOpgHmYCrVpQ"
         }
       ],
       "services": {
         "appinvite_service": {
           "other_platform_oauth_client": [
             {
-              "client_id": "140290660872-ghp74qgafgpqfigk6sa0mq9lgilosvae.apps.googleusercontent.com",
+              "client_id": "279832642801-cqqf5ov3qdi8u4m6089p686tge22i0i5.apps.googleusercontent.com",
               "client_type": 3
             }
           ]

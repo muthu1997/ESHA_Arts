@@ -1,11 +1,19 @@
+import { API } from "../utils/config";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as STRINGS from "../constants/strings";
+
+const header = {
+    "ACCEPT": "application/json",
+    "Content-Type": "application/json"
+}
 export const getFunction = async (url, callback) => {
+    if(global.isloggedin) {
+        header.Authorization = `Bearer ${await AsyncStorage.getItem(STRINGS.TOKEN)}`
+    }
     console.log('request: ', url)
-    fetch(`https://eshabackend.herokuapp.com/v1${url}`, {
+    fetch(`${API}${url}`, {
         method: "GET",
-        headers: {
-            "ACCEPT": "application/json",
-            "Content-Type": "application/json"
-        }
+        headers: header
     }).then(res => res.json())
         .then(res => {
             callback(res)
@@ -18,7 +26,7 @@ export const getFunction = async (url, callback) => {
 
 export const postFunction = async (url, data, callback) => {
     console.log(data)
-    fetch(`https://eshabackend.herokuapp.com/v1${url}`, {
+    fetch(`${API}${url}`, {
         method: "POST",
         headers: {
             "ACCEPT": "application/json",
@@ -36,25 +44,25 @@ export const postFunction = async (url, data, callback) => {
 }
 
 export const putFunction = async (url, data, callback) => {
-    fetch(`https://eshabackend.herokuapp.com/v1${url}`, {
+    fetch(`${API}${url}`, {
         method: "PUT",
         headers: {
             "ACCEPT": "application/json",
             "Content-Type": "application/json"
         },
-        body: data != "" ? JSON.stringify(data) : null
+        body: JSON.stringify(data)
     }).then(res => res.json())
         .then(res => {
-            callback(res)
+            return callback(res)
         })
         .catch(e => {
             console.log(e)
-            callback("error")
+            return callback("error")
         })
 }
 
 export const deleteFunction = async (url, callback) => {
-    fetch(`https://eshabackend.herokuapp.com/v1${url}`, {
+    fetch(`${API}${url}`, {
         method: "DELETE",
         headers: {
             "ACCEPT": "application/json",

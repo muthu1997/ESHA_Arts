@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Image, StatusBar, Dimensions, TouchableOpacity, ToastAndroid, ScrollView, Alert } from "react-native";
+import { View, StyleSheet, Image, StatusBar, Dimensions, ToastAndroid, ScrollView, Alert, TouchableOpacity } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import StepIndicator from 'react-native-step-indicator';
 import Header from "../../../component/header";
@@ -7,10 +7,15 @@ import Text from "../../../component/text";
 import Button from "../../../component/button";
 import TitleContainer from "../../../component/titleContainer";
 const { width } = Dimensions.get("screen");
-import { putFunction, getFunction } from "../../../constants/apirequest";
-import RazorpayCheckout from 'react-native-razorpay';
-import moment from "moment";
+import { getMethod, putMethod } from "../../../utils/function";
+import { PTM_MID } from "../../../utils/config";
+import { updateOrderList } from "../../redux/action";
 import { useSelector, useDispatch } from 'react-redux';
+import moment from "moment";
+import Lottie from 'lottie-react-native';
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import AllInOneSDKManager from 'paytm_allinone_react-native';
+import { ORDER_DETAILS_INIT, GET_ORDER_ADDRESS_SUCCESS, GET_ORDER_ADDRESS_ERROR, PAY_DUE_AMOUNT_SUCCESS, PAY_DUE_AMOUNT_ERROR, PAY_DUE_AMOUNT_RETRY, UPDATE_ORDER_SUCESS, UPDATE_ORDER_ERROR } from "../../../utils/events";
 
 const labels = ["Order\nplaced", "In progress", "Waiting for\npayment", "Product\nshipped", "Delivered"];
 const labels1 = ["Order\nplaced", "In progress", "Product\nshipped", "Delivered"];
@@ -21,69 +26,108 @@ export default function MyOrdersDetails(props) {
     const [addressData, setAddressData] = useState("");
     const [orderStatus, setOrderStatus] = useState("");
     const [btnLoader, setBtnLoader] = useState(false);
+    const [loader, setLoader] = useState(false);
     const [isAmountDue, setIsAmountDue] = useState(false);
     const user = useSelector(state => state.reducer.profile);
+    const dispatch = useDispatch();
     useEffect(() => {
+        console.log(JSON.stringify(orderData))
+        updateAFEvent(ORDER_DETAILS_INIT, "");
         getAddressById();
         let status = orderData.status === "PROCESSING" ? 0 : orderData.status === "INPROCESS" ? 1 : orderData.status === "PAYMENT" ? 2 : orderData.status === "SHIPMENT" ? 3 : orderData.status === "DELIVERED" ? 4 : 0
-        if(orderData.amountDue === 0 && status === 3) {
+        if (orderData.amountDue === 0 && status === 3) {
             setOrderStatus(2)
-        }else {
+        } else {
             setOrderStatus(status)
         }
         setIsAmountDue(orderData.amountDue > 0 ? false : true)
     }, [])
 
     function getAddressById() {
-        getFunction(`/addressbyid/${orderData.addressId}`, res => {
-            if (res !== "error") {
-                setAddressData(res.data);
-            }
+        getMethod(`/addressbyid/${orderData.addressId}`).then(res => {
+            updateAFEvent(GET_ORDER_ADDRESS_SUCCESS, "");
+            setAddressData(res.data);
+        }).catch(error => {
+            updateAFEvent(GET_ORDER_ADDRESS_ERROR, { "ERROR_DATA": error });
+            ToastAndroid.show("Unable to get order delivery address. Please close the app and open again.")
         })
     }
 
-    function payDueAmount() {
+    async function payDueAmount() {
+        let ordid = `ORD_HNDMD_${moment()}`;
         var options = {
-            description: 'Online payment',
-            image: require("../../../assets/images/sarashwathi.jpg"),
-            currency: 'INR',
-            key: 'rzp_test_e8HTrM8Epd80VR', // Your api key
-            amount: String(orderData.amountDue) + "00",
-            name: "EASHA ARTS",
-            prefill: {
-                email: user.email,
-                contact: user.phone,
-                name: user.name
-            },
-            theme: { color: COLOUR.PRIMARY }
+            orderIdFromApp: ordid,
+            amount: String(orderData.amountDue),
+            user: user._id
         }
+        console.log(options)
         setBtnLoader(true)
-        RazorpayCheckout.open(options).then((data) => {
-            // handle success
-            console.log(data)
-            updateOrderFunction();
-        }).catch((error) => {
-            // handle failure
-            setBtnLoader(false)
-            console.log(error)
-            console.log(`Error: ${error.code} | ${error.description}`);
-        });
+        await putMethod(`/order/pay/token`, options).then((res) => {
+            console.log(res);
+            AllInOneSDKManager.startTransaction(
+                ordid,
+                PTM_MID,
+                res.token,
+                String(orderData.amountDue),
+                "",
+                true,
+                false,
+                ""
+            ).then(async (result) => {
+                console.log(result)
+                if (result.STATUS !== "TXN_FAILURE") {
+                    updateAFEvent(UPDATE_ORDER_SUCESS, { "ORDER_ID": orderData._id });
+                    ToastAndroid.show("Payment done successfully.", ToastAndroid.CENTER, ToastAndroid.BOTTOM)
+                    updateAFEvent(PAY_DUE_AMOUNT_SUCCESS, { "DATA": result });
+                    updateOrderFunction();
+                    return setBtnLoader(false);
+                } else {
+                    console.log(result)
+                    ToastAndroid.showWithGravity(result.RESPMSG, ToastAndroid.CENTER, ToastAndroid.BOTTOM);
+                    return setBtnLoader(false);
+                }
+            }).catch((error) => {
+                updateAFEvent(PAY_DUE_AMOUNT_ERROR, { "ERROR_DATA": error });
+                // handle failure
+                Alert.alert("", "Payment failed. Do you want to try again?", [
+                    {
+                        text: "TRY AGAIN",
+                        onPress: () => {
+                            updateAFEvent(PAY_DUE_AMOUNT_RETRY, "");
+                            payDueAmount()
+                        }
+                    },
+                    {
+                        text: "CANCEL"
+                    }
+                ])
+                setBtnLoader(false)
+                return console.log(error)
+            });
+        }).catch(error => {
+            updateAFEvent(UPDATE_ORDER_ERROR, { "ERROR_DATA": error, "DATA": options, "URL": `/order/edit/${orderData._id}` });
+            return ToastAndroid.show("Payment done successfully. You will get update within 24 hours.", ToastAndroid.CENTER, ToastAndroid.BOTTOM)
+        })
     }
 
     function updateOrderFunction() {
+        setLoader(true);
         let options = {
             "amountPaid": orderData.totalPrice,
-            "amountDue": 0
+            "amountDue": 0,
+            "status": "PAYMENT DONE"
         }
-        console.log(`/order/edit/${orderData._id}`)
-        putFunction(`/order/edit/${orderData._id}`, options, (res) => {
-            console.log(res)
-            if (res.success === true) {
-                setBtnLoader(false)
-            }else {
-                setBtnLoader(false)
-                Alert.alert("Easha Arts","Payment done successfully, but not reflected in order. We received the query about this issue and we are working on it. This payment details will update this order with 24hrs.")
-            }
+        console.log(options)
+        putMethod(`/order/edit/${orderData._id}`, options).then((res) => {
+            dispatch(updateOrderList(user._id)).then(response => {
+                setLoader(false);
+            })
+            updateAFEvent(UPDATE_ORDER_SUCESS, { "ORDER_ID": orderData._id });
+            setBtnLoader(false)
+            ToastAndroid.show("Payment done successfully.", ToastAndroid.CENTER, ToastAndroid.BOTTOM)
+        }).catch(error => {
+            updateAFEvent(UPDATE_ORDER_ERROR, { "ERROR_DATA": error, "DATA": options, "URL": `/order/edit/${orderData._id}` });
+            ToastAndroid.show("Payment done successfully. You will get update within 24 hours.", ToastAndroid.CENTER, ToastAndroid.BOTTOM)
         })
     }
 
@@ -95,7 +139,7 @@ export default function MyOrdersDetails(props) {
                         <Text title={`${addressData?.type}`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 12 }} />
                     </View>
                 </View>
-                <Text title={`${orderData?.user.name},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.PRIMARY, fontSize: 16 }} />
+                <Text title={`${addressData?.name},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.PRIMARY, fontSize: 16 }} />
                 <Text title={`${addressData?.houseNo}, ${addressData?.street}`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 14 }} />
                 <Text title={`${addressData?.area},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 12, marginVertical: 2 }} />
                 <Text title={`${addressData?.city} - ${addressData?.zip},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 12, marginVertical: 2 }} />
@@ -107,21 +151,21 @@ export default function MyOrdersDetails(props) {
 
     function renderProductCard(item, index) {
         return (
-            <View key={item._id} style={styles.pcardContainer}>
+            <TouchableOpacity activeOpacity={0.8} key={item._id} onPress={() => props.navigation.navigate("ProductDetails", { id: item.product._id })} style={styles.pcardContainer}>
                 <View style={styles.imageContainer}>
-                    <Image source={{ uri: item.product.image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+                    <Image source={{ uri: item.product.image[0].image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
                 </View>
-                <View style={[styles.dataContainer]}>
-                    <Text title={item.product.name} type="ROBOTO_MEDIUM" lines={1} />
-                    <Text title={"Wooden frame"} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.ORANGE_DARK }} />
+                <View style={{width: "70%"}}>
+                    <Text title={item.product.name} type="ROBOTO_MEDIUM" lines={2} />
+                    {/* <Text title={item.sizeId.size_title} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.ORANGE_DARK }} /> */}
                     <View style={styles.dimensionContainer}>
-                        <Text title={`${item.product.width} × ${item.product.height} ${item.product.type}`} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 8, color: COLOUR.WHITE }} />
+                        <Text title={`Quantity ${item.quantity}`} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 8, color: COLOUR.DARK_GRAY }} />
                     </View>
                 </View>
                 <View style={styles.priceContainer}>
-                    <Text title={`₹ ` + item.product.price} type="ROBOTO_MEDIUM" lines={1} style={{ color: COLOUR.PRIMARY }} />
+                    {/* <Text title={`₹ ` + item.sizeId.price} type="ROBOTO_MEDIUM" lines={1} style={{ color: COLOUR.PRIMARY }} /> */}
                 </View>
-            </View>
+            </TouchableOpacity>
         )
     }
 
@@ -132,11 +176,10 @@ export default function MyOrdersDetails(props) {
                     <Text title={"Subtotal"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.subTotal}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
                 </View>
-                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between" }]}>
+                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between" }]}>
                     <Text title={"Delivery Price"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.deliveryPrice}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
-                </View> */}
-                <Text title={"Our Easha Arts customer care officer will call you and confirm the order and delivery price"} type="ROBOTO_MEDIUM" style={{color: "red"}} lines={3} />
+                </View>
                 <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between", borderTopWidth: 1 }]}>
                     <Text title={"Total"} type="ROBO_BOLD" lines={1} />
                     <Text title={`₹ ${orderData?.totalPrice}`} type="ROBO_BOLD" lines={2} style={{ color: COLOUR.PRIMARY }} />
@@ -144,32 +187,50 @@ export default function MyOrdersDetails(props) {
             </View>
         )
     }
+    if (loader) {
+        return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
+            <Text title={"Loading..."} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
+        </View>
+    }
     return (
         <View style={styles.container}>
             <StatusBar backgroundColor={COLOUR.WHITE} barStyle={"dark-content"} />
             <Header
                 style={{ backgroundColor: "transparent" }}
                 back
+                rightButton={true}
+                rightButtonIcon="wechat"
+                onPress={()=>{
+                    Alert.alert("Warning!", "Don't share your personal details like mobile number to the seller.", [
+                        {
+                            text: "CONTINUE",
+                            onPress: () => props.navigation.navigate("PChatScreen", {customer: {"name": user.name, _id: orderData.productOwner}})
+                        },{
+                            text: "CANCEL"
+                        }
+                    ])
+                }}
                 onGoBack={() => props.navigation.goBack()}
-                title={"Order Details" + orderStatus} />
+                title={"Order Details"} />
             <ScrollView showsVerticalScrollIndicator={false}>
-                {isAmountDue  ?
+                {isAmountDue ?
                     <StepIndicator
                         customStyles={customStyles}
                         currentPosition={orderStatus}
                         stepCount={4}
                         labels={labels1}
                     /> : <StepIndicator
-                    customStyles={customStyles}
-                    stepCount={5}
-                    currentPosition={orderStatus}
-                    labels={labels}
-                /> }
+                        customStyles={customStyles}
+                        stepCount={5}
+                        currentPosition={orderStatus}
+                        labels={labels}
+                    />}
                 <TitleContainer
                     title="Delivery Address" />
                 {renderAddressCard()}
                 {orderData.status !== "PROCESSING" ?
-                    <View style={[styles.dataContainer, { flexDirection: "row", width: "90%", alignSelf: "center", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginTop: 10, borderRadius: 10, backgroundColor: COLOUR.PRIMARY }]}>
+                    <View style={[styles.dataContainer, { flexDirection: "row", width: "90%", alignSelf: "center", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, marginTop: 10, borderRadius: 10, backgroundColor: COLOUR.DARK_GRAY }]}>
                         <Text title={"Expected delivery date"} type="ROBOTO_MEDIUM" lines={1} style={{ color: COLOUR.WHITE }} />
                         <Text title={moment(orderData?.expDelDate).format("DD MMM YYYY")} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.WHITE }} />
                     </View> : null}
@@ -182,15 +243,15 @@ export default function MyOrdersDetails(props) {
                     <Text title={"Payment Method"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={"Online"} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
                 </View>
-                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE }]}>
+                <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE }]}>
                     <Text title={"Amount Paid"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.amountPaid}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY }} />
                 </View>
                 <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 30, alignItems: "center", justifyContent: "space-between", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE }]}>
                     <Text title={"Amount Due"} type="ROBOTO_MEDIUM" lines={1} />
                     <Text title={`₹ ${orderData?.amountDue}`} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.RED }} />
-                </View> */}
-                {orderData.status === "PAYMENT" && orderData?.amountDue > 0 ?
+                </View>
+                {orderData?.status === "PAYMENT" && orderData?.amountDue > 0 ?
                     <View style={[styles.dataContainer, { width: "100%", height: 60, alignItems: "center", justifyContent: "center", paddingHorizontal: 20, borderRadius: 10, backgroundColor: COLOUR.WHITE, merginTop: 20 }]}>
                         <Button
                             title={`Pay ₹${orderData?.amountDue}`}
@@ -272,7 +333,7 @@ const styles = StyleSheet.create({
         justifyContent: "space-between"
     },
     dimensionContainer: {
-        width: "70%",
+        width: "50%",
         paddingHorizontal: 5,
         paddingVertical: 5,
         borderRadius: 5,

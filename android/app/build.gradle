@@ -126,7 +126,7 @@ android {
     compileSdkVersion rootProject.ext.compileSdkVersion
 
     defaultConfig {
-        applicationId "com.eashaarts.mobile"
+        applicationId "com.handmade.paintings.mobile"
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1
@@ -135,6 +135,9 @@ android {
     dexOptions {
     javaMaxHeapSize "4g"
   }
+  buildFeatures {
+            prefab true
+        }
     splits {
         abi {
             reset()
@@ -191,6 +194,10 @@ dependencies {
     implementation "com.facebook.react:react-native:+"  // From node_modules
     implementation project(':react-native-razorpay')
     implementation "androidx.swiperefreshlayout:swiperefreshlayout:1.0.0"
+
+    implementation "com.squareup.okhttp3:okhttp:4.2.1"
+    implementation "com.squareup.okhttp3:logging-interceptor:4.2.1"
+    implementation "com.squareup.okhttp3:okhttp-urlconnection:4.2.1"
 
     debugImplementation("com.facebook.flipper:flipper:${FLIPPER_VERSION}") {
       exclude group:'com.facebook.fbjni'

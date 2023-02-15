@@ -1,11 +1,14 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, StyleSheet, Dimensions, Image, TouchableOpacity, ToastAndroid, DeviceEventEmitter } from "react-native";
+import React, { useEffect } from "react";
+import { View, StyleSheet } from "react-native";
 import * as COLOUR from "../../../constants/colors";
-const { width } = Dimensions.get("screen");
 import { WebView } from 'react-native-webview';
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { CHAT_INIT } from "../../../utils/events";
 
 export default function ChatScreen(props) {
-
+    useEffect(() => {
+        updateAFEvent(CHAT_INIT, "");
+    },[])
     return (
         <View style={styles.container}>
             <WebView source={{

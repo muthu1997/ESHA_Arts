@@ -1,16 +1,21 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, StyleSheet, Dimensions, Image, TouchableOpacity, ToastAndroid, DeviceEventEmitter } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Dimensions, ToastAndroid } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Text from "../../../component/text";
 import Button from "../../../component/button";
 import Input from "../../../component/inputBox";
-import { putFunction, getFunction } from "../../../constants/apirequest";
+import { putMethod } from "../../../utils/function";
 const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { RESET_INIT, RESET_FAILUER, RESET_SUCCESS } from "../../../utils/events";
 
 export default function ResetScreen(props) {
-    const [code, setCode] = useState("");
     const [btnLoader, setBtnLoader] = useState(false);
     const [password, setPassword] = useState("");
+
+    useEffect(() => {
+        updateAFEvent(RESET_INIT, "");
+    }, [])
 
     function resetPassword() {
         if (password != "" && password.length < 8) {
@@ -22,19 +27,20 @@ export default function ResetScreen(props) {
                     passwordHash: password
                 }
                 let uid = props.route.params.id;
-                putFunction(`/user/password/${uid}`, data, res => {
-                    if (res.success === true) {
-                        setPassword("");
-                        ToastAndroid.showWithGravity("Password updated successfully.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        setBtnLoader(false)
-                        props.navigation.navigate("LoginScreen");
-                    } else {
-                        ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        setBtnLoader(false)
-                    }
+                putMethod(`/user/password/${uid}`, data).then(res => {
+                    setPassword("");
+                    updateAFEvent(RESET_SUCCESS, "");
+                    ToastAndroid.showWithGravity("Password updated successfully.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    setBtnLoader(false)
+                    return props.navigation.navigate("LoginScreen");
+                }).then(error => {
+                    console.log(error)
+                    ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    setBtnLoader(false)
+                    return updateAFEvent(RESET_FAILUER, { "ERROR_DATA": error });
                 })
             } else {
-                ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                return ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
             }
         }
     }
@@ -56,7 +62,6 @@ export default function ResetScreen(props) {
             </View>
             <Button
                 title="Update Password"
-                loading={btnLoader}
                 onPress={() => resetPassword()}
                 style={styles.login} />
         </View>

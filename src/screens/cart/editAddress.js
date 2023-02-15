@@ -8,8 +8,9 @@ import { useSelector, useDispatch } from 'react-redux';
 import Button from "../../../component/button";
 import Input from "../../../component/inputBox";
 import { updateAddressList } from "../../redux/action";
-import { putFunction, getFunction } from "../../../constants/apirequest";
-import { products } from "../dashboard/prod";
+import { getMethod, putMethod } from "../../../utils/function";
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { EDIT_ADDRESS_FAILURE, EDIT_ADDRESS_GETCITY_FAIURE, EDIT_ADDRESS_GETCITY_SUCCESS, EDIT_ADDRESS_INIT, EDIT_ADDRESS_SUCCESS } from "../../../utils/events";
 
 export default function EditAddress(props) {
     const incomingData = props.route.params.data;
@@ -23,9 +24,14 @@ export default function EditAddress(props) {
     const [zip, setZip] = useState(String(incomingData.zip));
     const [state, setState] = useState(incomingData.state);
     const [country, setCountry] = useState(incomingData.country);
+    const [name, setName] = useState(incomingData.name);
+    const [mobile, setMobile] = useState(String(incomingData.mobile));
     const [loader, setLoader] = useState(false);
     const dispatch = useDispatch();
 
+    useEffect(() => {
+        updateAFEvent(EDIT_ADDRESS_INIT, "");
+    },[]);
     function submitAddress() {
         setLoader(true);
         if (addressType != "" && houseNo != "" && street != "" && area != "" && zip != "" && state != "" && country != "") {
@@ -38,17 +44,21 @@ export default function EditAddress(props) {
                 zip: Number(zip),
                 state: state,
                 country: country,
-                userId: user._id
+                userId: user._id,
+                name: name,
+                mobile: mobile
             }
-            putFunction(`/address/${incomingData._id}`, data, res => {
-                if (res.success === true) {
+            console.log(data)
+            console.log(`/address/${incomingData._id}`)
+            putMethod(`/address/${incomingData._id}`, data).then(res => {
+                updateAFEvent(EDIT_ADDRESS_SUCCESS, "");
                     setLoader(false);
                     ToastAndroid.showWithGravity("Address updated successfully.", ToastAndroid.SHORT, ToastAndroid.CENTER);
                     getAddressList();
-                } else {
-                    ToastAndroid.showWithGravity("Something went wrong. Please try again later.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                    setLoader(false);
-                }
+            }).catch(error => {
+                updateAFEvent(EDIT_ADDRESS_FAILURE, {"ERROR_DATA":error});
+                ToastAndroid.showWithGravity("Something went wrong. Please try again later.",ToastAndroid.SHORT,ToastAndroid.CENTER);
+                setLoader(false);
             })
         } else {
             ToastAndroid.showWithGravity("Please fill all fields!", ToastAndroid.SHORT, ToastAndroid.CENTER);
@@ -57,10 +67,21 @@ export default function EditAddress(props) {
     }
 
     function getAddressList() {
-        getFunction(`/address/${user._id}`, res => {
-            if (res.success === true) {
-                dispatch(updateAddressList(res.data))
-            }
+        dispatch(updateAddressList(user._id))
+    }
+
+    function getCityByPin() {
+        getMethod(`/getcitystate/${zip}`).then(response => {
+            updateAFEvent(EDIT_ADDRESS_GETCITY_SUCCESS, "");
+            let result = response.data;
+            setCity(result.City);
+            setState(result.State);
+            setCountry("India");
+            console.log(response)
+        }).catch(error => {
+            updateAFEvent(EDIT_ADDRESS_GETCITY_FAIURE, {"ERROR_DATA":error});
+            console.log(error);
+            ToastAndroid.show("Something went wrong while fetching ZIP code data.")
         })
     }
 
@@ -73,9 +94,6 @@ export default function EditAddress(props) {
                 onGoBack={() => props.navigation.goBack()}
                 title="Update Address" />
             <KeyboardAvoidingView style={{ flex: 1, alignItems: "center" }} behavior="padding">
-                <Image source={{ uri: "https://img.freepik.com/free-vector/location-based-advertisement-geolocation-software-online-gps-app-navigation-system-geographic-restriction-man-searching-address-with-magnifier_335657-393.jpg?w=1380&t=st=1660968959~exp=1660969559~hmac=bae7202f97674b1fe35d1ad9cee69698b93b1b23947757312e5f8d1e1ce136bb" }}
-                    resizeMode="contain"
-                    style={{ width: "100%", height: "30%" }} />
                 <View style={styles.typeContainer}>
                     <View style={[{ flexDirection: "row", overflow: "hidden", height: 60, alignItems: "center" }]}>
                         <RadioButton
@@ -98,10 +116,24 @@ export default function EditAddress(props) {
                 </View>
                 <View style={styles.inputContainer}>
                     <Input
+                        placeholder="Contact Name"
+                        value={name}
+                        onChangeText={data => setName(data)}
+                        style={[styles.inputStyle, { width: "100%" }]} />
+                </View>
+                <View style={styles.inputContainer}>
+                    <Input
+                        placeholder="Mobile Number"
+                        value={mobile}
+                        onChangeText={data => setMobile(data)}
+                        style={[styles.inputStyle, { width: "100%" }]} />
+                </View>
+                <View style={styles.inputContainer}>
+                    <Input
                         placeholder="House no."
                         value={houseNo}
                         onChangeText={data => setHouseNo(data)}
-                        style={[styles.inputStyle, { width: "30%" }]} />
+                        style={[styles.inputStyle, { width: "38%" }]} />
                     <Input
                         placeholder="Street"
                         value={street}
@@ -119,31 +151,35 @@ export default function EditAddress(props) {
                     <Input
                         placeholder="City"
                         value={city}
+                        editable={false}
                         onChangeText={data => setCity(data)}
-                        style={[styles.inputStyle, { width: "50%" }]} />
+                        style={[styles.inputStyle, { width: "50%", backgroundColor: COLOUR.GRAY }]} />
                     <Input
                         placeholder="PIN / ZIP Code"
                         value={zip}
                         onChangeText={data => setZip(data)}
-                        style={[styles.inputStyle, { width: "40%" }]} />
+                        onSubmitEditing={() => getCityByPin()}
+                        style={[styles.inputStyle, { width: "48%" }]} />
                 </View>
                 <View style={styles.inputContainer}>
                     <Input
                         placeholder="State"
                         value={state}
+                        editable={false}
                         onChangeText={data => setState(data)}
-                        style={[styles.inputStyle, { width: "45%" }]} />
+                        style={[styles.inputStyle, { width: "48%", backgroundColor: COLOUR.GRAY }]} />
                     <Input
                         placeholder="Country"
                         value={country}
+                        editable={false}
                         onChangeText={data => setCountry(data)}
-                        style={[styles.inputStyle, { width: "45%" }]} />
+                        style={[styles.inputStyle, { width: "50%", backgroundColor: COLOUR.GRAY }]} />
                 </View>
                 <Button 
-                title="Add Address" 
+                title="Update" 
                 loading={loader}
-                onPress={() => submitAddress()}
-                style={{ marginTop: 30 }} />
+                onPress={() => submitAddress()} 
+                style={{marginTop: 30}} />
             </KeyboardAvoidingView>
         </View>
     )

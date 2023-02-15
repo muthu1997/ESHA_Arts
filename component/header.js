@@ -19,7 +19,7 @@ const Header = props => {
           activeOpacity={0.9}
           style={styles.profileImageBtn}>
             <Image 
-            source={require("../assets/images/logo.jpg")}
+            source={require("../assets/images/logo.png")}
             style={styles.profileImage}
             resizeMode="contain" />
           </TouchableOpacity>
@@ -30,13 +30,16 @@ const Header = props => {
             <View style={{ flexDirection: "row", alignItems: "center", width: "100%", justifyContent: "flex-start" }}>
               <MIcon name="arrow-left" color={COLOUR.BLACK} size={25} />
               {props.title ?
-                <Text title={props.title} type="title" style={{ fontSize: 22, color:COLOUR.BLACK, marginLeft: 20, textAlign: "center" }} /> : null}
+                <Text title={props.title} type="title" style={{ fontSize: 18, color:COLOUR.BLACK, marginLeft: 20, textAlign: "center" }} /> : null}
             </View>
+            {props.rightButton ? <TouchableOpacity style={styles.rightButton} activeOpacity={0.8} onPress={() => props.onPress()}>
+            <Icon name={props.rightButtonIcon} color={COLOUR.PRIMARY} size={25} />
+            </TouchableOpacity> : null }
           </TouchableOpacity> : null}
           {props.singleTitle ?
           <TouchableOpacity style={[styles.backTitleContainer]}>
             <View style={{ alignItems: "center", width: "100%", justifyContent: "center" }}>
-                <Text title={props.singleTitle} type="title" style={{ fontSize: 22, color:COLOUR.BLACK, marginLeft: 20, textAlign: "center" }} />
+                <Text title={props.singleTitle} type="title" style={{ fontSize: 18, color:COLOUR.BLACK, marginLeft: 20, textAlign: "center" }} />
             </View>
           </TouchableOpacity> : null}
 
@@ -90,8 +93,8 @@ const styles = StyleSheet.create({
     flexDirection: "row"
   },
   profileImageBtn: {
-    width: 50,
-    height: 50,
+    width: 40,
+    height: 40,
     borderRadius: 25,
     overflow: "hidden"
   },
@@ -135,7 +138,7 @@ const styles = StyleSheet.create({
     height: "60%"
   },
   backTitleContainer: {
-    width: "100%",
+    width: "85%",
     height: 65,
     alignItems: "center",
     justifyContent: "space-between",
@@ -145,6 +148,12 @@ const styles = StyleSheet.create({
     width: "100%",
     height: 75,
     backgroundColor: "red"
+  },
+  rightButton: {
+    width: 50,
+    height: 50,
+    alignItems: "center",
+    justifyContent: "center",
   }
 });
 

@@ -1,5 +1,9 @@
-import {CheckboxContainer} from "./checkbox";
+import { CheckboxContainer } from "./checkbox";
+import { CustomButton } from "./customButton";
+import { CartQtyButton } from "./quantityAdder";
 
-export default {
-    CheckboxContainer
+export {
+    CheckboxContainer,
+    CustomButton,
+    CartQtyButton
 }

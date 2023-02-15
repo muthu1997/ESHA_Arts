@@ -6,9 +6,9 @@ import * as COLOUR from "../constants/colors";
 const TitleContainer = props => {
   return (
       <View style={[styles.headerContainer, props.style]}>
-          <View style={{ justifyContent:'space-between', width: "100%"}}>
-            <Text title={props.title} type="ROBO_BOLD" style={{color: COLOUR.BLACK, fontSize: 20}} />
-            {props.secondaryTitle ? <Text onPress={() => props.onViewAll ? props.onViewAll() : null} title={props.secondaryTitle} type="ROBO_REGULAR" style={{color: COLOUR.BLACK, fontWeight: "500"}} /> : null }
+          <View style={{ justifyContent:'space-between', width: "100%", flexDirection: "row"}}>
+            <Text title={props.title} type="ROBO_BOLD" style={{color: COLOUR.BLACK, fontSize: props.small ? 16 : 20}} />
+            {props.secondaryTitle ? <Text title={props.secondaryTitle} type="ROBO_REGULAR" style={[{color: COLOUR.BLACK, fontWeight: "500"}, props.secStyle]} /> : null }
             {props.addButton ? <TouchableOpacity activeOpacity={0.8} style={styles.addButton}>
               <Icon name="plus" size={20} color={COLOUR.WHITE} />
             </TouchableOpacity> : null }

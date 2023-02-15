@@ -1,93 +1,121 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Image, StatusBar, Dimensions, TouchableOpacity, FlatList, DeviceEventEmitter } from "react-native";
+import { View, StyleSheet, Image, StatusBar, Dimensions, TouchableOpacity, FlatList, DeviceEventEmitter, ToastAndroid } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import Header from "../../../component/header";
 import Text from "../../../component/text";
 import TitleContainer from "../../../component/titleContainer";
 import Button from "../../../component/button";
-import { updateCartProductList } from "../../redux/action";
+import { updateCartProductList, updateCartList, updateCartQuantity } from "../../redux/action";
 import { useSelector, useDispatch } from 'react-redux';
-import { getFunction, deleteFunction } from "../../../constants/apirequest";
+import { deleteMethod } from "../../../utils/function";
 import { Modal } from 'react-native-paper';
 import Lottie from 'lottie-react-native';
 const { width } = Dimensions.get("screen");
-import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { CART_INIT, RM_CART_PDCT_FAILURE, RM_CART_PDCT_SUCCESS, GET_CARTLIST_FAILURE, GET_CARTLIST_SUCCESS } from "../../../utils/events";
+import { CartQtyButton } from "../../../component";
 
 export default function CartScreen(props) {
     const user = useSelector(state => state.reducer.profile);
-    const cartProductList = useSelector(state => state.reducer.cart_product_list);
+    var cartProductList = useSelector(state => state.reducer.cart_product_list);
     const [visible, setVisible] = useState(false);
     const [removing, setRemoving] = useState(false);
     const [selectedProduct, setSelectedProduct] = useState("");
     const [subtotal, setSubtotal] = useState(0);
-    const [delivery, setDelivery] = useState(0);
+    const [cartQtyLoader, setCartQtyLoader] = useState("");
     const [loggedOut, setLoggedOut] = useState(false);
+    const [loader, setLoader] = useState(true);
     const dispatch = useDispatch();
-
     useEffect(() => {
-        if (user) {
+        updateAFEvent(CART_INIT, "");
+        if (user !== "") {
             totalCalculator();
         } else {
             setLoggedOut(true)
+            setLoader(false)
         }
-    },[])
+    }, [totalCalculator])
 
     DeviceEventEmitter.addListener("REFRESH_CART", res => {
-        if(res === "yes") {
-            setTimeout(() => {
-                DeviceEventEmitter.emit("REFRESH_CART", "no")
-            },1000)
+        if (res === "yes") {
+            console.log("REFRESH_CART YES")
+            DeviceEventEmitter.emit("REFRESH_CART", "no")
             setLoggedOut(false)
             if (user) {
                 getCartList();
             }
         }
-        if(res === "logout") {
-            setTimeout(() => {
-                DeviceEventEmitter.emit("REFRESH_CART", "no")
-            },1000)
+        if (res === "logout") {
+            DeviceEventEmitter.emit("REFRESH_CART", "no")
             setLoggedOut(true)
         }
     })
 
     function getCartList() {
-        getFunction(`/cartproduct/${user._id}`, res => {
-            console.log("cart")
-            if (res !== "error") {
-                totalCalculator();
-                dispatch(updateCartProductList(res.data));
-                AmplitudeTrack("CART_LIST", {number: res.data?.length})
-            }
+        dispatch(updateCartList(user._id))
+        dispatch(updateCartProductList(user._id)).then(response => {
             setRemoving(false)
-            setVisible(false)
+            updateAFEvent(GET_CARTLIST_SUCCESS, "");
+            totalCalculator();
+            return setVisible(false)
+        }).catch(error => {
+            updateAFEvent(GET_CARTLIST_FAILURE, { "ERROR_DATA": error });
+            setRemoving(false)
+            return setVisible(false)
         })
     }
 
     function removeFromCart() {
         setRemoving(true)
         let id = cartProductList[selectedProduct]._id;
-        deleteFunction(`/cart/${id}`, res => {
-            if (res !== "error") {
-                getCartList();
-                AmplitudeTrack("DELETE_CART_PRODUCT", {product: id})
-            } else {
-                setRemoving(false)
-                setVisible(false);
-            }
+        deleteMethod(`/cart/${id}`).then(res => {
+            updateAFEvent(RM_CART_PDCT_SUCCESS, "");
+            getCartList();
+        }).catch(error => {
+            updateAFEvent(RM_CART_PDCT_FAILURE, { "ERROR_DATA": error });
+            setRemoving(false)
+            setVisible(false);
         })
     }
 
     function totalCalculator() {
-        console.log("cart")
         if (cartProductList.length > 0) {
             let subtotal = 0;
-            subtotal = cartProductList.map(item => item.itemId.price).reduce((prev, next) => prev + next);
+            subtotal = cartProductList.reduce((prev, next) => prev + (next.itemId.price * next.quantity), 0);
             setSubtotal(subtotal)
+            setLoader(false);
             return subtotal;
         } else {
             setSubtotal(0)
+            setLoader(false);
             return 0;
+        }
+    }
+
+    function addQtyFunction(id, type, qty) {
+        if (type === "INCREASE") {
+            setCartQtyLoader(id);
+            return dispatch(updateCartQuantity(id, type, user._id))
+                .then(response => {
+                    return setTimeout(() => setCartQtyLoader(""), 200)
+                }).catch(error => {
+                    ToastAndroid.show("Something went wrong, while updating cart details.", ToastAndroid.BOTTOM, ToastAndroid.CENTER);
+                    return setTimeout(() => setCartQtyLoader(""), 200)
+                })
+        } else {
+            if (qty < 1) {
+                return ToastAndroid.show("Cannot zero the quantity value.", ToastAndroid.BOTTOM, ToastAndroid.CENTER);
+            } else {
+                setCartQtyLoader(id);
+                return dispatch(updateCartQuantity(id, type, user._id))
+                    .then(response => {
+                        return setTimeout(() => setCartQtyLoader(""), 200)
+                    }).catch(error => {
+                        ToastAndroid.show("Something went wrong, while updating cart details.", ToastAndroid.BOTTOM, ToastAndroid.CENTER);
+                        return setTimeout(() => setCartQtyLoader(""), 200)
+                    })
+            }
         }
     }
 
@@ -95,20 +123,24 @@ export default function CartScreen(props) {
         return (
             <View style={styles.cardContainer}>
                 <View style={styles.imageContainer}>
-                    <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
+                    <Image source={{ uri: item.itemId?.image[0].image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
                 </View>
                 <View style={[styles.dataContainer]}>
-                    <Text title={item.name} type="ROBOTO_MEDIUM" lines={1} />
-                    <Text title={"Wooden frame"} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.ORANGE_DARK }} />
+                    <Text title={item.itemId?.name} type="ROBOTO_MEDIUM" lines={1} />
+                    {item.itemId.width !== 0 ? <Text title={`${item.itemId.width} ${item.itemId.whType} ✕ ${item.itemId.height} ${item.itemId.whType}`} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.BLACK }} /> : null}
                     <View style={styles.dimensionContainer}>
-                        <Text title={`${item.width} × ${item.height} ${item.type}`} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 8, color: COLOUR.WHITE }} />
+                        <CartQtyButton
+                            onRemoveQuantity={qty => addQtyFunction(item._id, "DECREASE", qty)}
+                            onAddQuantity={qty => addQtyFunction(item._id, "INCREASE", qty)}
+                            loader={cartQtyLoader === item._id ? true : false}
+                            quantity={item.quantity} />
                     </View>
                 </View>
                 <View style={styles.priceContainer}>
                     <TouchableOpacity activeOpacity={0.8} onPress={() => { setVisible(true); setSelectedProduct(index) }}>
                         <Icon name="close" size={20} color={COLOUR.DARK_GRAY} />
                     </TouchableOpacity>
-                    <Text title={`₹ ` + item.price} type="ROBOTO_MEDIUM" lines={1} style={{ color: COLOUR.PRIMARY }} />
+                    <Text title={`${item.quantity} × ₹` + (item.itemId.price)} type="ROBOTO_MEDIUM" lines={1} style={{ color: COLOUR.PRIMARY }} />
                 </View>
             </View>
         )
@@ -117,22 +149,31 @@ export default function CartScreen(props) {
     function renderTotal() {
         return (
             <View style={[styles.cardContainer, { flexDirection: "column", justifyContent: "center", height: 60, marginTop: 20 }]}>
-                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2, borderColor: COLOUR.LIGHTGRAY }]}>
-                    <Text title={"Subtotal"} type="ROBOTO_MEDIUM" lines={1} />
-                    <Text title={totalCalculator()} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.BLACK }} />
-                </View> */}
-                {/* <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between", borderBottomWidth: 2, borderColor: COLOUR.LIGHTGRAY }]}>
-                    <Text title={"Delivery"} type="ROBOTO_MEDIUM" lines={1} />
-                    <Text title={delivery} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 14, color: COLOUR.BLACK }} />
-                </View> */}
                 <View style={[styles.dataContainer, { flexDirection: "row", width: "100%", height: 40, alignItems: "center", justifyContent: "space-between" }]}>
-                    <Text title={"Product Value"} type="ROBO_BOLD" lines={1} />
-                    <Text title={`₹`+totalCalculator()} type="ROBO_BOLD" lines={2} style={{ color: COLOUR.ORANGE_DARK }} />
+                    <Text title={"Total MRP (Inclusive of all taxes)"} type="ROBOTO_MEDIUM" lines={1} />
+                    <Text title={`₹ ${subtotal}`} type="ROBO_BOLD" lines={2} style={{ color: COLOUR.ORANGE_DARK }} />
                 </View>
             </View>
         )
     }
 
+    function renderCheckoutButton() {
+        return cartProductList.length > 0 ? <View>
+            {renderTotal()}
+            <Button
+                title="Checkout"
+                onPress={() => {
+                    cartQtyLoader === "" ? props.navigation.navigate("Payment") : null;
+                }}
+                style={{ alignSelf: "center", margin: 20, backgroundColor: cartQtyLoader === "" ? COLOUR.PRIMARY : COLOUR.GRAY }} />
+        </View> : null
+    }
+    if (loader) {
+        return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
+            <Text title={"Loading..."} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
+        </View>
+    }
     return (
         <View style={styles.container}>
             <StatusBar backgroundColor={COLOUR.WHITE} barStyle={"dark-content"} />
@@ -146,7 +187,7 @@ export default function CartScreen(props) {
                     <FlatList
                         data={cartProductList}
                         renderItem={({ item, index }) => {
-                            return renderProductCard(item.itemId, index)
+                            return renderProductCard(item, index)
                         }}
                         showsVerticalScrollIndicator={false}
                         keyExtractor={item => item._id}
@@ -156,17 +197,9 @@ export default function CartScreen(props) {
                             </View>
                         }}
                         ListFooterComponent={() => {
-                            return cartProductList.length > 0 ? <View>
-                                {renderTotal()}
-                                <Button
-                                    title="Checkout"
-                                    onPress={() => {
-                                        props.navigation.navigate("Payment");
-                                        AmplitudeTrack("CHECKOUT_BUTTON")
-                                    }}
-                                    style={{ alignSelf: "center", margin: 20 }} />
-                            </View> : null
-                        }} />
+                            return renderCheckoutButton();
+                        }}
+                    />
                 </View> :
                 <View style={styles.logoutContainer}>
                     <Lottie source={require('../../../constants/log_cont.json')} autoPlay loop style={{ width: width / 1.5, height: width / 1.5 }} />
@@ -185,7 +218,7 @@ export default function CartScreen(props) {
                             onPress={() => { setVisible(false); setSelectedProduct("") }}
                             style={[styles.buttonStyle, { backgroundColor: COLOUR.DARK_BLUE }]} />
                     </View> : <View style={styles.buttonContainer}>
-                        <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{ width: 50, height: 50 }} />
+                        <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 50, height: 50 }} />
                     </View>}
                 </View>
             </Modal>
@@ -227,16 +260,14 @@ const styles = StyleSheet.create({
     dimensionContainer: {
         width: "70%",
         paddingHorizontal: 5,
-        paddingVertical: 5,
+        paddingVertical: 3,
         borderRadius: 5,
-        backgroundColor: COLOUR.GRAY,
         flexDirection: "row",
         alignItems: "center",
         justifyContent: "center"
     },
     modalContainer: {
         width: "90%",
-        height: "35%",
         borderRadius: 20,
         alignItems: "center",
         backgroundColor: COLOUR.WHITE,
@@ -245,14 +276,14 @@ const styles = StyleSheet.create({
         padding: 20
     },
     buttonContainer: {
-        width: "90%",
+        width: "80%",
         alignItems: "center",
         justifyContent: "space-around",
         flexDirection: "row",
         marginTop: 30
     },
     buttonStyle: {
-        width: "40%",
+        width: "43%",
         height: 40
     },
     logoutContainer: {

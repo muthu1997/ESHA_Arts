@@ -1,52 +1,54 @@
-import React, { useEffect, useState, useRef } from "react";
-import { View, StyleSheet, Dimensions, Image, TouchableOpacity, ToastAndroid, DeviceEventEmitter } from "react-native";
+import React, { useEffect, useState } from "react";
+import { View, StyleSheet, Dimensions, ToastAndroid } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Text from "../../../component/text";
 import Button from "../../../component/button";
-import Input from "../../../component/inputBox";
-import { postFunction, putFunction } from "../../../constants/apirequest";
-import AsyncStorage from "@react-native-async-storage/async-storage";
-import { updateProfileData } from "../../redux/action";
+import { putMethod } from "../../../utils/function";
 import { useDispatch } from 'react-redux';
 import OTPInputView from '@twotalltotems/react-native-otp-input'
-import Counter from "react-native-counters";
-import { Stopwatch, Timer } from 'react-native-stopwatch-timer';
 const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { OTP_INIT, OTP_VERIFICATION_SUCCESS, OTP_VERIFICATION_FAILURE } from "../../../utils/events";
 
 export default function OTP(props) {
     const [code, setCode] = useState("");
     const [btnLoader, setBtnLoader] = useState(false);
     const dispatch = useDispatch();
-    const [showTimer, setShowTimer] = useState(true);
-    const [isStopwatchStart, setIsStopwatchStart] = useState(true);
-    const [timerDuration, setTimerDuration] = useState(60000);
-    const [resetTimer, setResetTimer] = useState(false);
-    const [resetStopwatch, setResetStopwatch] = useState(false);
     const mobile = props.route.params.data;
 
+    useEffect(() => {
+        updateAFEvent(OTP_INIT, "");
+    }, [])
     function otpVerification() {
         if (code != "") {
             var uid = props.route.params.id;
             setBtnLoader(true)
-            putFunction(`/user/otp/${uid}/${code}`, "", res => {
+            let body = {
+                otp: String(code),
+                status: "ACTIVE"
+            }
+            console.log(body)
+            putMethod(`/user/otp/${uid}`, body).then(res => {
                 console.log(res)
-                if (res.success === true) {
-                    setCode("");
-                    setBtnLoader(false)
-                    if(global.isFromSignup === true) {
-                        global.isFromSignup = undefined;
-                        props.navigation.navigate("LoginScreen");
-                    } else if(global.isForgotPass === true) {
-                        global.isForgotPass = undefined;
-                        props.navigation.navigate("ResetScreen", {data: mobile, id: uid});
-                    }
+                if (global.isFromSignup === true) {
+                    console.log("isFromSignup")
+                    global.isFromSignup = undefined;
+                    props.navigation.navigate("LoginScreen");
                 } else {
-                    ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                    setBtnLoader(false)
+                    console.log("isForgotPass")
+                    global.isForgotPass = undefined;
+                    props.navigation.navigate("ResetScreen", { data: mobile, id: uid });
                 }
+                setCode("");
+                return setBtnLoader(false)
+            }).then(error => {
+                console.log(error)
+                updateAFEvent(OTP_VERIFICATION_FAILURE, { "ERROR_DATA": error });
+                ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                return setBtnLoader(false)
             })
         } else {
-            ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+            return ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
         }
     }
 
@@ -55,7 +57,7 @@ export default function OTP(props) {
             <View style={styles.titleContainer}>
                 <Text title={"Verify your number"} type="ROBOTO_BOLD" lines={2} style={[{ color: COLOUR.BLACK, fontSize: 24 }]} />
                 <Text title={"We just sent the otp to"} type="LOUIS_LIGHT" lines={2} style={[{ color: COLOUR.BLACK, fontSize: 18, marginTop: 20 }]} />
-                <Text title={"+91 7867926344"} type="LOUIS_LIGHT" lines={2} style={[{ color: COLOUR.BLACK, fontSize: 18 }]} />
+                <Text title={`+91 ${mobile}`} type="LOUIS_LIGHT" lines={2} style={[{ color: COLOUR.BLACK, fontSize: 18 }]} />
             </View>
             <View style={styles.inputContainer}>
                 <OTPInputView

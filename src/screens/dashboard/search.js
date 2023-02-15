@@ -1,37 +1,40 @@
-import React, { useState, useReducer, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { View, StyleSheet, StatusBar, Dimensions, Image, FlatList, TouchableOpacity, LogBox, Touchable } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Header from "../../../component/header";
 import TitleContainer from "../../../component/titleContainer";
-import Services from "../../../component/Services";
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import SplashScreen from 'react-native-splash-screen'
-import moment from "moment";
 import Input from "../../../component/inputBox";
 import Text from "../../../component/text";
-import { Workouts, InterMediateWorkoutPlan } from "../../../constants/seedData";
-import { useSelector, useDispatch } from 'react-redux';
-import { updateWorkoutPlan, updateWorkoutData } from "../../redux/action";
 import { getFunction } from "../../../constants/apirequest";
-import firebase from '@react-native-firebase/app';
-import Icon from "react-native-vector-icons/FontAwesome";
-import { Item } from "react-native-paper/lib/typescript/components/List/List";
 import Lottie from 'lottie-react-native';
-const { width, height } = Dimensions.get("screen");
+const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { SEARCH_DATA, SEARCH_FAILURE, SEARCH_INIT } from "../../../utils/events";
 
 export default function SearchScreen(props) {
     const [getSearchList, setSearchList] = useState([]);
     const [getSearchParams, setSearchParams] = useState("");
     const [loader, setLoader] = useState(false);
+    const [emptyMessage, setEmptyMessage] = useState("Search by product name");
+
+    useEffect(() => {
+        updateAFEvent(SEARCH_INIT, "");
+    }, [])
 
     function startSearching() {
+        updateAFEvent(SEARCH_DATA, { "DATA": getSearchParams });
         setLoader(true)
         setSearchList("")
         getFunction(`/product/search/${String(getSearchParams)}`, res => {
             if (res !== "error") {
-                setSearchList(res.data)
+                setSearchList(res.data);
+                if(res.data.length === 0) {
+                    setEmptyMessage("No products found!")
+                }
             }
             setLoader(false)
+        }).catch(error => {
+            updateAFEvent(SEARCH_FAILURE, { "ERROR_DATA": error });
         })
     }
 
@@ -39,20 +42,20 @@ export default function SearchScreen(props) {
         return (
             <TouchableOpacity
                 style={styles.productRectContainer}
-                onPress={() => props.navigation.navigate("ProductDetails", { data: item })}
+                onPress={() => props.navigation.navigate("ProductDetails", { id: item._id })}
                 activeOpacity={0.8}>
                 <View style={styles.produImage}>
-                    <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
-                </View>
-                <View style={{ padding: 5, justifyContent: "space-between", flex: 1 }}>
-                    <Text title={item.name} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text title={"₹ " + item.price} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
-                        <Text title={"/ Per Photo"} type="ROBO_REGULAR" lines={2} style={{ fontSize: 12, color: COLOUR.DARK_GRAY }} />
-                    </View>
+                    <Image source={{ uri: item.image[0].image }} style={{ width: "100%", height: "100%" }} resizeMode="contain" />
                 </View>
             </TouchableOpacity>
         )
+    }
+
+    if (loader) {
+        return <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
+            <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
+            <Text title={"Loading..."} type="ROBO_REGULAR" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
+        </View>
     }
 
     return (
@@ -73,28 +76,25 @@ export default function SearchScreen(props) {
                     onSubmitEditing={() => startSearching()}
                     style={[styles.searchButton, { width: props.filter ? "80%" : "100%", backgroundColor: COLOUR.LIGHTGRAY, alignSelf: "center" }]} />
             </View>
-            {getSearchList.length > 0 ?
-                <>
-                    <TitleContainer
-                        title="Search Results" />
-                    <View style={{ flex: 1, alignItems: "center" }}>
-                        <FlatList
-                            numColumns={2}
-                            showsHorizontalScrollIndicator={false}
-                            data={getSearchList}
-                            renderItem={({ item, index }) => {
-                                return renderRectProductList(item)
-                            }}
-                            keyExtractor={item => item._id} />
-                    </View>
-                </> : loader ?
-                    <View style={{ flex: 1, alignItems: "center", justifyContent: "center" }}>
-                        <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{ width: 200, height: 200 }} />
-                        <Text title={"Loading..."} type="ROBO_REGULAR" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
-                    </View> :
-                    <View style={styles.initialStyle}>
-                        <Text title={"Search with god name..."} type="ROBO_REGULAR" lines={2} style={{ fontSize: 12, color: COLOUR.DARK_GRAY }} />
-                    </View>}
+            <>
+                <TitleContainer
+                    title="Search Results" />
+                <View style={{ flex: 1, alignItems: "center" }}>
+                    <FlatList
+                        numColumns={2}
+                        showsVerticalScrollIndicator={false}
+                        data={getSearchList}
+                        renderItem={({ item, index }) => {
+                            return renderRectProductList(item)
+                        }}
+                        ListEmptyComponent={() => {
+                            return <View style={styles.initialStyle}>
+                                <Text title={emptyMessage} type="ROBO_REGULAR" lines={2} style={{ fontSize: 12, color: COLOUR.DARK_GRAY }} />
+                            </View>
+                        }}
+                        keyExtractor={item => item._id} />
+                </View>
+            </>
         </View>
     )
 }
@@ -112,12 +112,11 @@ const styles = StyleSheet.create({
         height: width / 2,
         backgroundColor: COLOUR.WHITE,
         borderRadius: 10,
-        elevation: 5,
         margin: 5
     },
     produImage: {
         width: "100%",
-        height: "60%",
+        height: "100%",
         borderRadius: 10,
         overflow: "hidden",
         backgroundColor: COLOUR.WHITE

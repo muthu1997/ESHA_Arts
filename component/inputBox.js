@@ -45,6 +45,7 @@ class Input extends React.Component {
           secureTextEntry={this.props.secureTextEntry && !this.state.secure ? true : false}
           returnKeyType={this.props.returnKeyType}
           keyboardType={this.props.keyboardType}
+          editable={this.props.editable}
           multiline={this.props.multiline}
           style={[{ width: this.props.eye ? "80%" : "100%", height: 55, paddingLeft: 10, color: COLOUR.BLACK, justifyContent: "center" }]}
         />

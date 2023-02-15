@@ -1,15 +1,16 @@
-import React, { useState } from "react";
-import { View, StyleSheet, Image, StatusBar, Dimensions, TouchableOpacity, FlatList, DeviceEventEmitter } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, StatusBar, TouchableOpacity, DeviceEventEmitter } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import Header from "../../../component/header";
 import Text from "../../../component/text";
-import { getFunction } from "../../../constants/apirequest";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import {logoutFunction} from "../../redux/action";
 import Button from "../../../component/button";
+import * as STRINGS from "../../../constants/strings";
 import { useSelector, useDispatch } from 'react-redux';
-const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { ACCOUNT_INIT, LOGOUT } from "../../../utils/events";
 const options = [
     {
         id: 5,
@@ -27,11 +28,6 @@ const options = [
         code: "ep"
     },
     {
-        id: 2,
-        name: "Ask Question",
-        code: "rq"
-    },
-    {
         id: 4,
         name: "Terms And Conditions",
         code: "tc"
@@ -45,6 +41,11 @@ const options = [
         id: 3,
         name: "Customer Support",
         code: "cs"
+    },
+    {
+        id: 2,
+        name: "Sell On Handmade",
+        code: "rq"
     }
 ]
 
@@ -66,6 +67,10 @@ export default function CartScreen(props) {
     const [custVisible, setCustVisible] = useState(false);
     const dispatch = useDispatch();
 
+    useEffect(() => {
+        updateAFEvent(ACCOUNT_INIT, "");
+    },[])
+
     function redirector(item) {
         if (item.code === "ma") {
             props.navigation.navigate("MyAddressList");
@@ -79,13 +84,14 @@ export default function CartScreen(props) {
             props.navigation.navigate("EditProfile");
         } else if (item.code === "cs") {
             props.navigation.navigate("ChatScreen");
-            // props.navigation.navigate("Query");
         }
     }
 
     async function logoutAllFunction() {
         dispatch(logoutFunction());
-        await AsyncStorage.removeItem("USER_ID");
+        updateAFEvent(LOGOUT, "");
+        await AsyncStorage.removeItem(STRINGS.UID);
+        await AsyncStorage.removeItem(STRINGS.TOKEN);
         props.navigation.navigate("LoginScreen");
         DeviceEventEmitter.emit("REFRESH_CART", "logout")
     }   
@@ -131,7 +137,6 @@ export default function CartScreen(props) {
                     onPress={() => props.navigation.navigate("LoginScreen")}
                     style={{ width: "55%" }} /> }
                 <Text title={'Version 1.0.0'} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY, fontSize: 10, marginTop: 10 }} />
-                <Text title={'Contact developer @ 19smkumar97@gmail.com'} type="ROBOTO_MEDIUM" lines={2} style={{ color: COLOUR.PRIMARY, fontSize: 10 }} />
             </View>
 
         </View>

@@ -30,6 +30,13 @@ target 'demo' do
 
   pod 'react-native-razorpay', :path => '../node_modules/react-native-razorpay'
 
+  pod 'react-native-appsflyer', :path => '../node_modules/react-native-appsflyer'
+
+  pod 'BVLinearGradient', :path => '../node_modules/react-native-linear-gradient'
+
+  pod 'RNReanimated', :path => '../node_modules/react-native-reanimated'
+
+
   target 'demoTests' do
     inherit! :complete
     # Pods for testing

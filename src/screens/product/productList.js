@@ -33,17 +33,13 @@ export default function DashboardScreen(props) {
         return (
             <TouchableOpacity
                 style={styles.productRectContainer}
-                onPress={() => props.navigation.navigate("ProductDetails", { data: item })}
+                onPress={() => props.navigation.navigate("ProductDetails", { id: item._id })}
                 activeOpacity={0.8}>
                 <View style={styles.produImage}>
-                    <Image source={{ uri: item.image }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
+                    <Image source={{ uri: item.image[0].image }} style={{ width: "100%", height: "100%" }} resizeMode="cover" />
                 </View>
-                <View style={{ padding: 5, justifyContent: "space-between", flex: 1 }}>
+                <View style={{ justifyContent: "center", alignItems: "center", flex: 1 }}>
                     <Text title={item.name} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text title={"₹ " + item.price} type="ROBO_BOLD" lines={2} style={[styles.catText, { fontSize: 12,color: COLOUR.DARK_GRAY }]} />
-                        <Text title={"/ Per Photo"} type="ROBO_REGULAR" lines={2} style={{ fontSize: 12, color: COLOUR.DARK_GRAY }} />
-                    </View>
                 </View>
             </TouchableOpacity>
         )
@@ -59,7 +55,7 @@ export default function DashboardScreen(props) {
             <View style={{ alignItems: "center", flex: 1 }}>
                 {loader ?
                 <View style={{flex:1, alignItems:"center", justifyContent:"center"}}>
-            <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{width: 200, height: 200}} />
+                <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
                         <Text title={"Loading..."} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
             </View> :  
                 <FlatList
@@ -109,7 +105,7 @@ const styles = StyleSheet.create({
     },
     produImage: {
         width: "100%",
-        height: "60%",
+        height: "80%",
         borderRadius: 10,
         overflow: "hidden",
         backgroundColor: COLOUR.WHITE,

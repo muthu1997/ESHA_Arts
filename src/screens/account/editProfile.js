@@ -4,17 +4,24 @@ import * as COLOUR from "../../../constants/colors";
 import Text from "../../../component/text";
 import Button from "../../../component/button";
 import Input from "../../../component/inputBox";
-import { putFunction, getFunction } from "../../../constants/apirequest";
+import { putMethod } from "../../../utils/function";
 import { updateProfileData } from "../../redux/action";
 import Header from "../../../component/header";
 import { useSelector, useDispatch } from 'react-redux';
 const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { UPDATE_PROFILE_INIT, UPDATE_PROFILE_ERROR, UPDATE_PROFILE_SUCCESS } from "../../../utils/events";
 
 export default function Login(props) {
     const [btnLoader, setBtnLoader] = useState(false);
     const user = useSelector(state => state.reducer.profile);
     const [name, setName] = useState(user.name);
+    const [email, setEmail] = useState(user.email);
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        updateAFEvent(UPDATE_PROFILE_INIT, "");
+    },[])
 
     function updateProfile() {
         if (name === "" && name.length < 3) {
@@ -23,19 +30,19 @@ export default function Login(props) {
             if (name != "") {
                 setBtnLoader(true)
                 var data = {
-                    "name": name
+                    "name": name,
+                    "email": email
                 }
-                console.log(user._id)
-                putFunction(`/user/update/${user._id}`, data, res => {
+                putMethod(`/user/update/${user._id}`, data).then(res => {
+                    updateAFEvent(UPDATE_PROFILE_SUCCESS, "");
+                    getUserData();
+                    ToastAndroid.showWithGravity("Updated successfully.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    setBtnLoader(false)
                     console.log(res)
-                    if (res.success === true) {
-                        getUserData();
-                        ToastAndroid.showWithGravity("Updated successfully.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        setBtnLoader(false)
-                    } else {
-                        ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        setBtnLoader(false)
-                    }
+                }).catch(error => {
+                    updateAFEvent(UPDATE_PROFILE_ERROR, {"ERROR_DATA": error});
+                    ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    setBtnLoader(false)
                 })
             } else {
                 ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
@@ -44,12 +51,10 @@ export default function Login(props) {
     }
 
     const getUserData = () => {
-        getFunction(`/user/${user._id}`, res => {
-            console.log(res)
-            if (res !== "error") {
-                dispatch(updateProfileData(res.data));
-                props.navigation.goBack();
-            }
+        dispatch(updateProfileData(user._id)).then(res => {
+            props.navigation.goBack();
+        }).catch(error => {
+            ToastAndroid.showWithGravity("Something went wrong.", ToastAndroid.SHORT, ToastAndroid.CENTER);
         })
     }
 
@@ -69,6 +74,11 @@ export default function Login(props) {
                     value={name}
                     onChangeText={data => setName(data)}
                     style={[styles.inputStyle, { width: "100%" }]} />
+                    <Input
+                        placeholder="Email"
+                        value={email}
+                        onChangeText={data => setEmail(data)}
+                        style={[styles.inputStyle, { width: "100%" }]} />
             </View>
             <Button
                 title="Update Profile"

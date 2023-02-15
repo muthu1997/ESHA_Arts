@@ -4,11 +4,14 @@ import * as COLOUR from "../../../constants/colors";
 import Text from "../../../component/text";
 import Button from "../../../component/button";
 import Input from "../../../component/inputBox";
-import { postFunction, getFunction } from "../../../constants/apirequest";
+import { postMethod, getMethod } from "../../../utils/function";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { updateProfileData } from "../../redux/action";
 import { useDispatch } from 'react-redux';
+import * as STRINGS from "../../../constants/strings";
 const { width } = Dimensions.get("screen");
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { RESET_PASSWORD, LOGIN_ERROR, LOGIN_INIT, LOGIN_SUCCESS } from "../../../utils/events";
 
 export default function Login(props) {
     const [mobile, setMobile] = useState("");
@@ -17,6 +20,10 @@ export default function Login(props) {
     const [btnLoader, setBtnLoader] = useState(false);
     const [resetLoader, setResetLoader] = useState(false);
     const dispatch = useDispatch();
+
+    useEffect(() => {
+        updateAFEvent(LOGIN_INIT, "");
+    }, [])
 
     function loginFunction() {
         if (password != "" && password.length < 8) {
@@ -29,17 +36,17 @@ export default function Login(props) {
                     password: password,
                     country_code: ccode
                 }
-                postFunction('/user/login', data, res => {
-                    if (res.success === true) {
-                        setMobile("");
-                        setPassword("");
-                        ToastAndroid.showWithGravity("Logged In.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        routerFunction(res);
-                        setBtnLoader(false)
-                    } else {
-                        ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
-                        setBtnLoader(false)
-                    }
+                postMethod('/user/login', data).then(res => {
+                    updateAFEvent(LOGIN_SUCCESS, "");
+                    setMobile("");
+                    setPassword("");
+                    ToastAndroid.showWithGravity("Logged In.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    routerFunction(res);
+                    setBtnLoader(false)
+                }).catch(error => {
+                    updateAFEvent(LOGIN_ERROR, { "ERROR_DATA": error });
+                    ToastAndroid.showWithGravity("Something went wrong. Please try again.", ToastAndroid.SHORT, ToastAndroid.CENTER);
+                    setBtnLoader(false)
                 })
             } else {
                 ToastAndroid.showWithGravity("Please fill all fields.", ToastAndroid.SHORT, ToastAndroid.CENTER);
@@ -48,26 +55,24 @@ export default function Login(props) {
     }
 
     async function routerFunction(data) {
-        await AsyncStorage.setItem("USER_ID", data.userId);
-        getFunction(`/user/${data.userId}`, res => {
-            if (res !== "error") {
-                dispatch(updateProfileData(res.data));
-                props.navigation.goBack();
-                // DeviceEventEmitter.emit("REFRESH_DASHBOARD", "yes")
-                // DeviceEventEmitter.emit("REFRESH_CATEGORY", "yes")
-                DeviceEventEmitter.emit("REFRESH_CART", "yes")
-            }
+        await AsyncStorage.setItem(STRINGS.UID, data.userId);
+        await AsyncStorage.setItem(STRINGS.TOKEN, data.token);
+        global.headers = true;
+        dispatch(updateProfileData(data.userId)).then(response => {
+            props.navigation.goBack();
+            DeviceEventEmitter.emit("REFRESH_CART", "yes");
         })
     }
 
-    async function getUserDetailsFunction() {
+    async function generateOTPFunction() {
         setResetLoader(true);
-        getFunction(`/user/generateotp/${mobile}`, res => {
-            if (res !== "error") {
-                global.isForgotPass = true;
-                console.log(res)
-                props.navigation.navigate("OTPScreen", { data: mobile, id: res.message._id });
-            }
+        getMethod(`/user/generateotp/${mobile}`).then(res => {
+            updateAFEvent(RESET_PASSWORD, "");
+            global.isForgotPass = true;
+            console.log(res)
+            props.navigation.navigate("OTPScreen", { data: mobile, id: res.message._id });
+            setResetLoader(false);
+        }).catch(error => {
             setResetLoader(false);
         })
     }
@@ -78,7 +83,7 @@ export default function Login(props) {
                 <View
                     style={styles.profileImageBtn}>
                     <Image
-                        source={require("../../../assets/images/logo.jpg")}
+                        source={require("../../../assets/images/logo.png")}
                         style={styles.profileImage}
                         resizeMode="contain" />
                 </View>
@@ -118,7 +123,7 @@ export default function Login(props) {
                 <Text title={"Forgot password ?"} type="ROBO_REGULAR" style={[{ color: COLOUR.BLACK }]} />
                 <TouchableOpacity activeOpacity={0.8} onPress={() => {
                     if (mobile.length > 9) {
-                        getUserDetailsFunction();
+                        generateOTPFunction();
                     } else {
                         ToastAndroid.showWithGravity("Enter mobile number to continue.", ToastAndroid.SHORT, ToastAndroid.CENTER);
                     }

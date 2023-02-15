@@ -1,189 +1,201 @@
-import React, { useState, useReducer, useEffect } from "react";
-import { View, StyleSheet, StatusBar, ScrollView, Dimensions, SafeAreaView, FlatList, TouchableOpacity, LogBox, Linking } from "react-native";
+import React, { useState, useEffect } from "react";
+import { View, StyleSheet, StatusBar, ScrollView, Dimensions, FlatList, TouchableOpacity, LogBox, Linking, SectionList } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Header from "../../../component/header";
 import TitleContainer from "../../../component/titleContainer";
-import { getFunction, putFunction } from "../../../constants/apirequest";
+import { putMethod } from "../../../utils/function";
 import FastImage from 'react-native-fast-image'
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import SplashScreen from 'react-native-splash-screen'
-import moment from "moment";
 import Text from "../../../component/text";
 import { useSelector, useDispatch } from 'react-redux';
 import { Modal } from 'react-native-paper';
 import Lottie from 'lottie-react-native';
-const { width, height } = Dimensions.get("screen");
-import analytics from "@react-native-firebase/analytics";
+import * as STRINGS from "../../../constants/strings";
+const { width } = Dimensions.get("screen");
 import Button from "../../../component/button";
-import {APP_VERSION} from "../../../constants/strings";
-import { updateDashCategoryList, updateTopPick, updateFeatured, updateFavoruitList, updateProfileData, updateCartList, updateCartProductList } from "../../redux/action";
-import {AmplitudeTrack} from "../../../constants/amplitudeConfig";
+import { APP_VERSION } from "../../../constants/strings";
+import { updateDashCategoryList, updateTopPick, updateFeatured, updateFavoruitList, updateProfileData, updateCartList, updateCartProductList, getImageSize, getMascelinous, updateLandscape, updateAddressList } from "../../redux/action";
+import { updateUID } from "../../../utils/appsflyerConfig";
+import { APP_UPDATE_EXECUTED, DASHBOARD_INIT, FCM_TOKEN_SAVED, TAP_PRODUCT_LANDSCAPE, TAP_PRODUCT_PORTRAIT, TAP_PRODUCT_SQUARE, ANDROID_DEVICE } from "../../../utils/events";
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { sendFirebaseNotification } from "../../../utils/function";
+import ImageWithResizeMode from "../../../component/imageView";
+import { MotiView } from "moti";
+import { Easing } from "react-native-reanimated";
 
 export default function DashboardScreen(props) {
-    const getCategoryListData = useSelector(state => state.reducer.dash_category_list);
-    const getTopPickData = useSelector(state => state.reducer.top_pick);
-    const getFeatured = useSelector(state => state.reducer.featured_product);
     const user = useSelector(state => state.reducer.profile);
+    const [dashboardProducts, setDashboardProducts] = useState([]);
+    const [imageDimensions, setImageDimensions] = useState([]);
     const [mascelinous, setMascelinous] = useState({});
     const [versionUpdate, setVersionUpdate] = useState(false);
     const dispatch = useDispatch();
 
     useEffect(() => {
+        updateAFEvent(DASHBOARD_INIT, "");
         LogBox.ignoreLogs(['VirtualizedLists should never be nested']);
-        AmplitudeTrack("Dashboard Init")
         getLocalDatas();
-        getCategoryList();
-        getTopPicksList();
-        getFeaturedList();
-        getMascelinous();
+        getMainDatas();
+        getMascelinousFunction();
+        getImageSizeFunction()
     }, [])
 
+    const getMainDatas = async () => {
+        console.log("Inside getMainDatas")
+        return await new Promise.all([dispatch(updateDashCategoryList()), dispatch(updateTopPick()), dispatch(updateFeatured()), dispatch(updateLandscape()), dispatch(updateFeatured())])
+            .then(response => {
+                console.log("result")
+                let result = [
+                    { title: "Categories", data: response[0], type: "BUTTON" },
+                    { title: "Top Picks", data: response[1], type: "PORTRAIT" },
+                    { title: "Featured", data: response[2], type: "SQUARE" },
+                    { title: "More", data: response[3], type: "PORTRAIT" },
+                    { title: "For You", data: response[4], type: "SQUARE" }
+                ];
+                console.log(result)
+                setDashboardProducts(result);
+                return SplashScreen.hide();
+            }).catch(error => {
+                console.log(error);
+                return SplashScreen.hide();
+            })
+    }
 
     const storeFCMToken = async () => {
-        await AsyncStorage.getItem("TOKE_ADDED").then(res => {
-            // if(res !== "YES") {
+        await AsyncStorage.getItem(STRINGS.FIREBASE_TOKEN).then(res => {
+            if (res !== "YES") {
                 let fcmToken = global.fcmtoken;
                 var data = {
                     "token": fcmToken
                 }
-                console.log("toek update")
-                putFunction(`/user/update/${user._id}`, data, async(res) => {
-                    if (res.success === true) {
-                        console.log(res)
-                        await AsyncStorage.setItem("TOKE_ADDED", "YES");
-                    }
+                putMethod(`/user/update/${user._id}`, data).then(async (res) => {
+                    updateAFEvent(FCM_TOKEN_SAVED, { "DEVICE": ANDROID_DEVICE });
+                    await AsyncStorage.setItem(STRINGS.FIREBASE_TOKEN, "YES");
                 })
-            // }
+            }
         });
+    }
+
+    const getImageSizeFunction = async () => {
+        dispatch(getImageSize());
     }
 
     const getLocalDatas = async () => {
-        await AsyncStorage.getItem("USER_ID").then(res => {
-            if (res) {
-                getFavList(res);
-                getUserData(res);
-                getCartList(res);
-                getCartProductList(res);
-                storeFCMToken();
+        setTimeout(() => {
+            sendFirebaseNotification("Hello")
+        }, 5000)
+        setTimeout(async () => {
+            if (global.headers = true) {
+                await AsyncStorage.getItem(STRINGS.UID).then(res => {
+                    if (res) {
+                        updateUID(res);
+                        getFavList(res);
+                        getUserData(res);
+                        getCartList(res);
+                        getCartProductList(res);
+                        storeFCMToken();
+                        dispatch(updateAddressList(res));
+                    }
+                })
             }
-        });
-    }
-
-    const getCategoryList = () => {
-        getFunction('/categoryname/dashlist', res => {
-            if (res !== "error") {
-                dispatch(updateDashCategoryList(res.data));
-            }
-        })
-    }
-
-    const getTopPicksList = () => {
-        getFunction('/products/gettoppick', res => {
-            console.log("getTopPicksList")
-            if (res !== "error") {
-                dispatch(updateTopPick(res.data))
-            }
-        })
-    }
-
-    const getFeaturedList = () => {
-        getFunction('/products/gettoppick', res => {
-            console.log("getFeaturedList")
-            if (res !== "error") {
-                dispatch(updateFeatured(res.data))
-                SplashScreen.hide();
-            }
-        })
+        }, 2000)
     }
 
     function getFavList(_id) {
-        getFunction(`/fav/${_id}`, res => {
-            console.log("getFavList")
-            if (res.success === true) {
-                dispatch(updateFavoruitList(res.data))
-            }
-        })
+        dispatch(updateFavoruitList(_id))
     }
 
     const getUserData = (_id) => {
-        getFunction(`/user/${_id}`, res => {
-            console.log(res)
-            if (res !== "error") {
-                dispatch(updateProfileData(res.data));
-                let usr = res.data;
-                AmplitudeTrack("USER_DATA",{
-                    name: usr.name,
-                    id: _id
-                })
-            }
-        })
+        dispatch(updateProfileData(_id));
     }
 
     function getCartProductList(_id) {
-        getFunction(`/cartproduct/${_id}`, res => {
-            console.log("getCartProductList")
-            if (res !== "error") {
-                dispatch(updateCartProductList(res.data));
-            }
-        })
+        dispatch(updateCartProductList(_id));
     }
 
     const renderCategoryList = (item) => {
         return (
             <TouchableOpacity
                 style={styles.caategoryButton}
-                onPress={() => props.navigation.navigate("ProductList", { data: item })}
+                onPress={() => {
+                    updateAFEvent(FCM_TOKEN_SAVED, { "DEVICE": ANDROID_DEVICE });
+                    props.navigation.navigate("ProductList", { data: item._id })
+                }}
                 activeOpacity={0.8}>
+                <View style={styles.catImage}>
+                    <FastImage
+                        style={{ width: 40, height: 40 }}
+                        source={{
+                            uri: item.image,
+                            priority: FastImage.priority.high
+                        }}
+                        resizeMode={FastImage.resizeMode.cover}
+                    />
+                </View>
                 <Text title={"" + item.name} type="ROBOTO_MEDIUM" style={styles.catText} />
             </TouchableOpacity>
         )
     }
 
     const getCartList = (_id) => {
-        getFunction(`/cart/${_id}`, res => {
-            if (res !== "error") {
-                dispatch(updateCartList(res.data))
-            }
-        })
+        dispatch(updateCartList(_id));
     }
 
-    const getMascelinous = (_id) => {
-        getFunction(`/user/mascelinous`, res => {
-            if (res !== "error") {
-                console.log(res)
-                let result = res.data;
-                setMascelinous(result);
-                global.acceptOrder = result.APP_ACCEPT_ORDER;
-                if(result.APP_VERSION !== APP_VERSION) {
+    const getMascelinousFunction = () => {
+        dispatch(getMascelinous())
+            .then(response => {
+                setMascelinous(response);
+                global.acceptOrder = response.APP_ACCEPT_ORDER;
+                if (response.APP_VERSION !== APP_VERSION) {
                     setVersionUpdate(true);
                 }
-            }
-        })
+            }).catch(error => {
+                console.log("getMascelinousFunction: ", error)
+            })
     }
 
-    const renderRectProductList = (item) => {
+    const renderRectProductList = (item, index) => {
         return (
             <TouchableOpacity
                 style={styles.productRectContainer}
-                onPress={() => props.navigation.navigate("ProductDetails", { data: item })}
+                onPress={() => {
+                    updateAFEvent(TAP_PRODUCT_PORTRAIT, { "PRODUCT": item.name });
+                    props.navigation.navigate("ProductDetails", { id: item._id })
+                }}
                 activeOpacity={0.8}>
                 <View style={styles.produImage}>
+                    <ImageWithResizeMode source={{ uri: item.image[0].image }} />
+                </View>
+                <View style={{ justifyContent: "center", marginTop: 10 }}>
+                    <Text title={`${item.name}`} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
+                    <View style={{ flexDirection: "row" }}>
+                        <Text title={`₹${item.mrp}`} type="ROBOTO_MEDIUM" lines={1} style={[styles.catText, { color: COLOUR.GRAY, fontSize: 16, textDecorationLine: "line-through" }]} />
+                        <Text title={` ₹${item.price}`} type="ROBOTO_MEDIUM" lines={1} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 16 }]} />
+                    </View>
+                </View>
+            </TouchableOpacity>
+        )
+    }
+
+    const renderLandscapeCard = (item) => {
+        return (
+            <TouchableOpacity
+                style={styles.productLandContainer}
+                onPress={() => {
+                    updateAFEvent(TAP_PRODUCT_LANDSCAPE, { PRODUCT: item.name });
+                    props.navigation.navigate("ProductDetails", { id: item._id })
+                }}
+                activeOpacity={0.8}>
+                <View style={[styles.produImage, { alignItems: "center", height: "100%" }]}>
                     <FastImage
-                        style={{ width: "100%", height: "100%" }}
+                        style={{ width: "95%", height: "100%" }}
                         source={{
-                            uri: `${item.image}`,
-                            headers: { Authorization: 'someAuthToken' },
+                            uri: `${item.image[0].image}`,
                             priority: FastImage.priority.high,
                         }}
-                        resizeMode={FastImage.resizeMode.cover}
+                        resizeMode={FastImage.resizeMode.contain}
                     />
-                </View>
-                <View style={{ padding: 5, justifyContent: "space-between", flex: 1 }}>
-                    <Text title={item.name} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 12 }]} />
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text title={"₹ " + item.price} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
-                        <Text title={""} type="ROBO_REGULAR" lines={2} style={{ fontSize: 12, color: COLOUR.DARK_GRAY }} />
-                    </View>
                 </View>
             </TouchableOpacity>
         )
@@ -192,32 +204,99 @@ export default function DashboardScreen(props) {
     const renderSquareProducts = (item) => {
         return (
             <TouchableOpacity
-                style={styles.productFeatureContainer}
+                style={[styles.productRectContainer, { margin: 0, borderRadius: 0, marginBottom: 5 }]}
                 onPress={() => {
-                    props.navigation.navigate("ProductDetails", { data: item })
+                    updateAFEvent(TAP_PRODUCT_PORTRAIT, { "PRODUCT": item.name });
+                    props.navigation.navigate("ProductDetails", { id: item._id })
                 }}
                 activeOpacity={0.8}>
-                <View style={styles.produFeatureImage}>
-                    <FastImage
+                <View style={[styles.produImage, { borderRadius: 0 }]}>
+                    <ImageWithResizeMode source={{ uri: item.image[0].image }} custom_style={{ width: "100%", height: "100%" }} />
+                    {/* <FastImage
                         style={{ width: "100%", height: "100%" }}
                         source={{
-                            uri: `${item.image}`,
-                            headers: { Authorization: 'someAuthToken' },
-                            priority: FastImage.priority.high,
+                            uri: `${item.image[0].image}`,
+                            priority: FastImage.priority.high
                         }}
                         resizeMode={FastImage.resizeMode.cover}
-                    />
+                    /> */}
                 </View>
-                <View style={{ padding: 5, justifyContent: "space-between", flex: 1 }}>
-                    <Text title={item.name} type="ROBOTO_MEDIUM" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
-                    <Text title={item.description} type="ROBO_REGULAR" lines={3} style={{ fontSize: 12, color: COLOUR.GRAY }} />
-                    <View style={{ flexDirection: "row", alignItems: "center" }}>
-                        <Text title={"₹ " + item.price} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
-                        <Text title={""} type="ROBO_REGULAR" lines={2} style={{ fontSize: 12, color: COLOUR.DARK_GRAY }} />
+                <View style={{ justifyContent: "center", marginTop: 10 }}>
+                    <Text title={item.name} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.BLACK }]} />
+                    <View style={{ flexDirection: "row" }}>
+                        <Text title={`₹${item.mrp}`} type="ROBOTO_MEDIUM" lines={1} style={[styles.catText, { color: COLOUR.GRAY, fontSize: 16, textDecorationLine: "line-through" }]} />
+                        <Text title={` ₹${item.price}`} type="ROBOTO_MEDIUM" lines={1} style={[styles.catText, { color: COLOUR.BLACK, fontSize: 16 }]} />
                     </View>
                 </View>
             </TouchableOpacity>
         )
+    }
+
+    function renderLanscape(data) {
+        return <View>
+            <FlatList
+                horizontal
+                nestedScrollEnabled
+                bounces
+                pagingEnabled
+                showsHorizontalScrollIndicator={false}
+                data={data}
+                renderItem={({ item, index }) => {
+                    return renderLandscapeCard(item)
+                }}
+                keyExtractor={item => item._id} />
+        </View>
+    }
+
+    function renderTopPicks(data) {
+        return <>
+            <View style={{ paddingBottom: 20 }}>
+                <FlatList
+                    horizontal
+                    nestedScrollEnabled
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingLeft: 20 }}
+                    data={data}
+                    renderItem={({ item, index }) => {
+                        return renderRectProductList(item, index)
+                    }}
+                    keyExtractor={item => item._id} />
+            </View>
+        </>
+    }
+
+    function renderCategories(data) {
+        return <>
+            <View style={{ paddingBottom: 20 }}>
+                <FlatList
+                    horizontal
+                    nestedScrollEnabled
+                    showsHorizontalScrollIndicator={false}
+                    contentContainerStyle={{ paddingLeft: 20 }}
+                    data={data}
+                    renderItem={({ item, index }) => {
+                        return <View style={{ padding: 1 }}>{renderCategoryList(item)}</View>
+                    }}
+                    keyExtractor={(item, index) => index} />
+            </View>
+        </>
+    }
+
+    function renderFeatured(data) {
+        return <>
+            <View style={{ paddingBottom: 20, alignItems: "center" }}>
+                <FlatList
+                    nestedScrollEnabled
+                    showsVerticalScrollIndicator={false}
+                    contentContainerStyle={{ paddingLeft: 20 }}
+                    data={data}
+                    numColumns={2}
+                    renderItem={({ item, index }) => {
+                        return renderSquareProducts(item)
+                    }}
+                    keyExtractor={item => item._id} />
+            </View>
+        </>
     }
 
     return (
@@ -227,58 +306,52 @@ export default function DashboardScreen(props) {
                 home
                 greetingsMessage="Welcome Back!"
                 search
-                username={user.name ? user.name : ""}
+                username={user?.name ? user.name : ""}
                 onSearch={() => props.navigation.navigate("Search")} />
-            <ScrollView showsVerticalScrollIndicator={false} style={{ flex: 1 }}>
-                <TitleContainer
-                    title="Categories" />
-                <View style={{ paddingBottom: 20 }}>
-                    <FlatList
-                        horizontal
-                        nestedScrollEnabled
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingLeft: 20 }}
-                        data={getCategoryListData}
-                        renderItem={({ item, index }) => {
-                            return <View style={{ padding: 1 }}>{renderCategoryList(item)}</View>
-                        }}
-                        keyExtractor={item => item._id} />
-                </View>
-                <TitleContainer
-                    title="Top Picks" />
-                <View style={{ paddingBottom: 20 }}>
-                    <FlatList
-                        horizontal
-                        nestedScrollEnabled
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={{ paddingLeft: 20 }}
-                        data={getTopPickData}
-                        renderItem={({ item, index }) => {
-                            return renderRectProductList(item)
-                        }}
-                        keyExtractor={item => item._id} />
-                </View>
-                <TitleContainer
-                    title="Featured" />
-                <View style={{ paddingBottom: 20 }}>
-                    <FlatList
-                    nestedScrollEnabled
-                        showsVerticalScrollIndicator={false}
-                        contentContainerStyle={{ paddingLeft: 20 }}
-                        data={getFeatured}
-                        renderItem={({ item, index }) => {
-                            return renderSquareProducts(item)
-                        }}
-                        keyExtractor={item => item._id} />
-                </View>
-            </ScrollView>
+            <View style={{ width: "100%", height: 500, alignItems: "center", justifyContent: "center" }}>
+                {
+                    [...Array(3).keys()].map((item, index) => {
+                        return (
+                            <MotiView
+                                from={{ opacity: 0.7, scale: 1 }}
+                                animate={{ opacity: 0, scale: 4 }}
+                                transition={{
+                                    type: "timing",
+                                    duration: 2000,
+                                    easing: Easing.out(Easing.ease),
+                                    delay: index * 400,
+                                    repeatReverse: true,
+                                    loop: true
+                                }}
+                                key={index}
+                                style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: "red", position: "absolute" }}
+                            />
+                        )
+                    })
+                }
+            </View>
+            <SectionList
+                sections={dashboardProducts}
+                keyExtractor={(item, index) => item + index}
+                renderItem={({ section: { title }, item }) => null}
+                renderSectionHeader={({ section }) => (
+                    <>
+                        {section.title ? <TitleContainer
+                            title={section.title} /> : null}
+                        {section.type === "BUTTON" ? renderCategories(section.data) : section.type === "PORTRAIT" ? renderTopPicks(section.data) : section.type === "SQUARE" ? renderFeatured(section.data) : null}
+                    </>
+                )}
+            />
             <Modal visible={versionUpdate} >
                 <View style={styles.modalContainer}>
                     <Text title={"New Update Available!"} type="ROBO_BOLD" lines={1} style={{ color: COLOUR.PRIMARY }} />
                     <Text title={mascelinous.APP_UP_DESC} type="ROBO_REGULAR" style={{ color: COLOUR.DARK_GRAY, textAlign: "center", width: "80%", marginTop: 10 }} />
-                        <Lottie source={require('../../../constants/update.json')} autoPlay loop={false} style={{ width: 200, height: 200 }} />
-                        <Button
-                        onPress={async() => {await Linking.openURL(mascelinous.APP_LINK)}}
+                    <Lottie source={require('../../../constants/update.json')} autoPlay loop={false} style={{ width: 200, height: 200 }} />
+                    <Button
+                        onPress={async () => {
+                            updateAFEvent(APP_UPDATE_EXECUTED, { "CURRENT_VERSION": APP_VERSION });
+                            await Linking.openURL(mascelinous.APP_LINK)
+                        }}
                         title={`Update Now`}
                         style={{ alignSelf: "center", margin: 20 }} />
                 </View>
@@ -293,51 +366,59 @@ const styles = StyleSheet.create({
         backgroundColor: COLOUR.WHITE
     },
     caategoryButton: {
-        height: 35,
+        height: 50,
         backgroundColor: COLOUR.WHITE,
-        borderRadius: 5,
         borderWidth: 1,
+        borderRadius: 5,
         paddingHorizontal: 10,
-        marginHorizontal: 5,
         alignItems: "center",
         justifyContent: "center",
-        borderColor: COLOUR.LIGHTGRAY
+        borderColor: COLOUR.LIGHTGRAY,
+        flexDirection: "row"
+    },
+    catImage: {
+        width: 40,
+        height: 40,
+        borderRadius: 20,
+        marginRight: 5,
+        overflow: "hidden"
     },
     catText: {
-        color: COLOUR.DARK_GRAY
+        color: COLOUR.DARK_GRAY,
+        fontSize: 12
     },
     productRectContainer: {
-        width: width / 2.5,
-        height: width / 2,
+        width: width / 2,
         backgroundColor: COLOUR.WHITE,
         borderRadius: 10,
-        elevation: 1,
         margin: 5
     },
+    productLandContainer: {
+        width: width - 20,
+        height: width / 1.5,
+        backgroundColor: COLOUR.WHITE,
+        elevation: 1
+    },
     produImage: {
-        width: "100%",
-        height: "60%",
+        width: width / 2,
+        height: width / 2,
         borderRadius: 10,
         overflow: "hidden",
         backgroundColor: COLOUR.WHITE
     },
     productFeatureContainer: {
-        width: "90%",
-        height: width / 3,
+        width: width / 2.2,
         backgroundColor: COLOUR.WHITE,
         borderRadius: 10,
-        elevation: 1,
         margin: 5,
-        flexDirection: "row",
-        alignItems: "center"
+        borderWidth: 0.5
     },
     produFeatureImage: {
-        width: "30%",
-        height: "80%",
+        width: "100%",
+        height: width / 2.2,
         borderRadius: 10,
         overflow: "hidden",
-        backgroundColor: COLOUR.WHITE,
-        marginLeft: 5
+        backgroundColor: COLOUR.WHITE
     },
     modalContainer: {
         width: "90%",

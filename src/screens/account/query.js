@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from "react";
-import { View, StyleSheet, Image, StatusBar, Dimensions, ToastAndroid, FlatList, KeyboardAvoidingView } from "react-native";
+import { View, StyleSheet, Image, StatusBar, ToastAndroid, KeyboardAvoidingView } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import { query } from "../../../constants/icons";
 import Header from "../../../component/header";
@@ -8,16 +8,21 @@ import Button from "../../../component/button";
 import Input from "../../../component/inputBox";
 import { useSelector } from 'react-redux';
 import email from "react-native-email";
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { QUARY_INIT, QUERY_SENT_BUTTON_CLICK } from "../../../utils/events";
 
 export default function AddressScreen(props) {
     const [name, setName] = useState("");
     const [description, setDescription] = useState("");
     const user = useSelector(state => state.reducer.profile);
-
+    useEffect(() => {
+        updateAFEvent(QUARY_INIT, "");
+    }, [])
     const sendQuery = () => {
         if (name != "" && description != "") {
-            const mails = ["19smkumar97@gmail.com"];
+            const mails = ["muthukumar@fruitionsoft.in"];
             const descriptiondata = `User Name: ${name},\nPhone: ${user.phone}\nMessage: ${description}.`
+            updateAFEvent(QUERY_SENT_BUTTON_CLICK, "");
             email(mails, {
                 subject: "QUERY FROM EASHA CUSTOMER",
                 body: descriptiondata,
@@ -40,7 +45,7 @@ export default function AddressScreen(props) {
                     resizeMode="contain"
                     style={{ width: "100%", height: "30%" }} />
                 <View style={styles.typeContainer}>
-                    <Text title={"Write your query and we will response back within 6hours."} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 12, color: COLOUR.BLACK }} />
+                    <Text title={"Write your complaint and we will response back within 6hours."} type="ROBOTO_MEDIUM" lines={2} style={{ fontSize: 12, color: COLOUR.BLACK }} />
                 </View>
                 <View style={styles.inputContainer}>
                     <Input

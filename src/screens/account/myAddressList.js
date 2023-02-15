@@ -1,15 +1,14 @@
 import React, { useEffect,useState } from "react";
-import { View, StyleSheet, Image, StatusBar, Dimensions, TouchableOpacity, FlatList, ImageBackground } from "react-native";
+import { View, StyleSheet, StatusBar, TouchableOpacity, FlatList } from "react-native";
 import * as COLOUR from "../../../constants/colors";
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import Header from "../../../component/header";
 import Text from "../../../component/text";
-const { width } = Dimensions.get("screen");
 import { useSelector, useDispatch } from 'react-redux';
 import {updateAddressList} from "../../redux/action";
 import Lottie from 'lottie-react-native';
-import { postFunction, getFunction } from "../../../constants/apirequest";
-
+import { updateAFEvent } from "../../../utils/appsflyerConfig";
+import { MY_ADDRESS_INIT } from "../../../utils/events";
 
 export default function MyAddress(props) {
     const user = useSelector(state => state.reducer.profile);
@@ -19,13 +18,12 @@ export default function MyAddress(props) {
 
     useEffect(() => {
         getAddressList();
+        updateAFEvent(MY_ADDRESS_INIT, "");
     }, [])
 
     function getAddressList() {
-        getFunction(`/address/${user._id}`, res => {
-            if (res.success === true) {
-                dispatch(updateAddressList(res.data))
-            }
+        dispatch(updateAddressList(user._id)).then(res => {
+            console.log(res)
             setLoader(false);
         })
     }
@@ -41,6 +39,8 @@ export default function MyAddress(props) {
                         <Icon name="pencil" size={15} color={COLOUR.WHITE} />
                     </TouchableOpacity>
                 </View>
+                <Text title={`${item.name},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 14 }} />
+                <Text title={`${item.mobile},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 14 }} />
                 <Text title={`${item.houseNo}, ${item.street}`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 14 }} />
                 <Text title={`${item.area},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 12, marginVertical: 5 }} />
                 <Text title={`${item.city} - ${item.zip},`} type="ROBOTO_MEDIUM" style={{ color: COLOUR.DARK_GRAY, fontSize: 12, marginVertical: 5 }} />
@@ -63,7 +63,7 @@ export default function MyAddress(props) {
             <Text title={`${addressList.length} Saved Addresses`} type="ROBOTO_MEDIUM" lines={1} style={{ color: COLOUR.DARK_GRAY, fontSize: 10, margin: 5 }} />
             {loader ?
                 <View style={{flex:1, alignItems:"center", justifyContent:"center"}}>
-            <Lottie source={require('../../../constants/loader.json')} autoPlay loop style={{width: 200, height: 200}} />
+                <Lottie source={require('../../../assets/lottie/loader.json')} autoPlay loop style={{ width: 150, height: 150 }} />
                         <Text title={"Loading..."} type="ROBO_BOLD" lines={2} style={[styles.catText, { color: COLOUR.PRIMARY }]} />
             </View> :  
             <FlatList

@@ -6,10 +6,10 @@
  * @flow strict-local
  */
 
-import React, { useEffect } from 'react';
+import React, { useEffect, useState } from 'react';
 import {
   StatusBar,
-  Alert
+  View
 } from 'react-native';
 import 'react-native-gesture-handler';
 import { NavigationContainer } from '@react-navigation/native';
@@ -19,15 +19,17 @@ import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import FIcon from "react-native-vector-icons/Fontisto";
 import * as COLOUR from "./constants/colors";
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createStore, combineReducers } from 'redux';
+import { createStore, combineReducers, applyMiddleware } from 'redux';
+import thunk from "redux-thunk";
 import { Provider } from 'react-redux';
+import createSocketIoMiddleware from 'redux-socket.io';
 import messaging, { firebase } from '@react-native-firebase/messaging';
 import PushNotification from "react-native-push-notification";
-import RNAmplitude, { init } from '@amplitude/analytics-react-native';
-import {AMPLITUDE_API_KEY, MAIL} from "./constants/strings";
+import * as STRINGS from "./constants/strings";
+import { appsflyerSDKInitialise } from './utils/appsflyerConfig';
+import io from 'socket.io-client';
 
 import Dashboard from "./src/screens/dashboard/dashboard";
-import WorkoutDetail from "./src/screens/dashboard/workoutDetail";
 import mainReducer from './src/redux/reducer';;
 import ProductDetails from './src/screens/product/productDetails';
 import ProductList from "./src/screens/product/productList";
@@ -51,48 +53,51 @@ import OTP from "./src/screens/account/otp";
 import Signup from "./src/screens/account/signup";
 import Chat from "./src/screens/account/chat";
 import Reset from "./src/screens/account/reset";
+import PChatScreen from "./src/screens/chat/chat";
+import PChatDummyScreen from "./src/screens/chat/dummy";
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
 export default function App() {
+  const [renderNothing, setRenderNothing] = useState(true);
   const rootReducer = combineReducers(
     { reducer: mainReducer }
   );
   const configureStore = () => {
-    return createStore(rootReducer);
+    const socket = io.connect("http://ec2-54-238-131-132.ap-northeast-1.compute.amazonaws.com:3001");
+    const socketIoMiddleware = createSocketIoMiddleware(socket, "server/")
+    return createStore(rootReducer, applyMiddleware(thunk,socketIoMiddleware));
   }
   useEffect(() => {
-    amplitudeInit();
-    if (requestUserPermission()) {
-      getFcmToken();
-    } else {
-      console.log('Not Authorization status:', authStatus);
-    }
+    appsflyerSDKInitialise().then(res => {
+      if (requestUserPermission()) {
+        getFcmToken();
+      } else {
+        console.log('Not Authorization status:', authStatus);
+      }
+      setRenderNothing(false);
+    }).catch(error => {
+      setRenderNothing(false);
+      if (requestUserPermission()) {
+        getFcmToken();
+      } else {
+        console.log('Not Authorization status:', authStatus);
+      }
+    })
     const unsubscribe = messaging().onMessage(async remoteMessage => {
+      console.log("new notification")
       PushNotification.localNotification({
-        title: remoteMessage.notification.title,
-        message: remoteMessage.notification.body,
+        title: "remoteMessage.notification.title",
+        message: "remoteMessage.notification.body",
         channelId: "fcm_fallback_notification_channel",
+      });
     });
-    });
-
+    global.messageSentUsers = [];
     return unsubscribe;
   }, [])
 
-  const amplitudeInit = async() => {
-    await AsyncStorage.getItem("USER_ID").then(res => {
-      if (res) {
-        // init(AMPLITUDE_API_KEY, res);
-        // const amplitude = new RNAmplitude(AMPLITUDE_API_KEY);
-        // amplitude.setUserId(res);
-      }else {
-        // init(AMPLITUDE_API_KEY, "NOT_LOGGEDIN");
-      }
-  });
-  }
-
   PushNotification.popInitialNotification((notification) => {
-    if(notification) {
+    if (notification) {
       console.log("popInitialNotification ", notification);
       global.notification = notification;
     }
@@ -119,8 +124,9 @@ export default function App() {
       authStatus === messaging.AuthorizationStatus.PROVISIONAL
     );
   };
-  const getFcmToken = () => {
+  const getFcmToken = async () => {
     messaging().getToken().then((fcmToken) => {
+      console.log(fcmToken)
       global.fcmtoken = fcmToken;
     });
   }
@@ -131,7 +137,6 @@ export default function App() {
         <Stack.Screen name="Dashboard" component={Dashboard} options={{ headerShown: false }} />
         <Stack.Screen name="ProductDetails" component={ProductDetails} options={{ headerShown: false }} />
         <Stack.Screen name="ProductList" component={ProductList} options={{ headerShown: false }} />
-        <Stack.Screen name="WorkoutDetail" component={WorkoutDetail} options={{ headerShown: false }} />
         <Stack.Screen name="Camera" component={Camera} options={{ headerShown: false }} />
         <Stack.Screen name="Search" component={SearchScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
@@ -173,6 +178,9 @@ export default function App() {
         <Stack.Screen name="OTPScreen" component={OTP} options={{ headerShown: false }} />
         <Stack.Screen name="ChatScreen" component={Chat} options={{ headerShown: false }} />
         <Stack.Screen name="ResetScreen" component={Reset} options={{ headerShown: false }} />
+        <Stack.Screen name="ProductDetails" component={ProductDetails} options={{ headerShown: false }} />
+        <Stack.Screen name="PChatScreen" component={PChatScreen} options={{ headerShown: false }} />
+        <Stack.Screen name="PChatDummyScreen" component={PChatDummyScreen} options={{ headerShown: false }} />
       </Stack.Navigator>
     );
   }
@@ -184,6 +192,10 @@ export default function App() {
         <Stack.Screen name="Camera" component={Camera} options={{ headerShown: false }} />
       </Stack.Navigator>
     );
+  }
+
+  if(renderNothing) {
+    return <View />
   }
 
   return (

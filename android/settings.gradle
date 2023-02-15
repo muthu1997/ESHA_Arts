@@ -1,4 +1,12 @@
 rootProject.name = 'demo'
+include ':@shopify_react-native-skia'
+project(':@shopify_react-native-skia').projectDir = new File(rootProject.projectDir, '../node_modules/@shopify/react-native-skia/android')
+include ':react-native-reanimated'
+project(':react-native-reanimated').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-reanimated/android')
+include ':react-native-linear-gradient'
+project(':react-native-linear-gradient').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-linear-gradient/android')
+include ':react-native-appsflyer'
+project(':react-native-appsflyer').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-appsflyer/android')
 include ':react-native-razorpay'
 project(':react-native-razorpay').projectDir = new File(rootProject.projectDir, '../node_modules/react-native-razorpay/android')
 include ':lottie-react-native'

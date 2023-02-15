@@ -17,6 +17,8 @@ export const ORANGE_DARK = "rgb(221, 156, 106)"
 export const DARK_GRAY = "#4C4E52";
 export const YELLOW = "#e1b12c";
 export const RED = "#e74c3c";
+export const BLUE = "#4b7bec";
+export const GREEN = "#20bf6b";
 
 export default {
     PRIMARY,
@@ -33,5 +35,7 @@ export default {
     ORANGE,
     ORANGE_DARK,
     DARK_GRAY,
-    RED
+    RED,
+    BLUE,
+    GREEN
 }

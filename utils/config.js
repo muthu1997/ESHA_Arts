@@ -1,5 +1,5 @@
 //API handlers
-export const API = "http://192.168.102.139:3000/v1";
+export const API = "http://192.168.225.139:3000/v1";
 // export const API = "https://project-easha-arts.onrender.com/v1";
 // export const API = "http://ec2-54-238-131-132.ap-northeast-1.compute.amazonaws.com:3000/v1"
 

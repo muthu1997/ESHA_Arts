@@ -23,6 +23,7 @@ import { sendFirebaseNotification } from "../../../utils/function";
 import ImageWithResizeMode from "../../../component/imageView";
 import { MotiView } from "moti";
 import { Easing } from "react-native-reanimated";
+import { AnimatedSwitch } from "../../../component/switch";
 
 export default function DashboardScreen(props) {
     const user = useSelector(state => state.reducer.profile);
@@ -308,28 +309,9 @@ export default function DashboardScreen(props) {
                 search
                 username={user?.name ? user.name : ""}
                 onSearch={() => props.navigation.navigate("Search")} />
-            <View style={{ width: "100%", height: 500, alignItems: "center", justifyContent: "center" }}>
-                {
-                    [...Array(3).keys()].map((item, index) => {
-                        return (
-                            <MotiView
-                                from={{ opacity: 0.7, scale: 1 }}
-                                animate={{ opacity: 0, scale: 4 }}
-                                transition={{
-                                    type: "timing",
-                                    duration: 2000,
-                                    easing: Easing.out(Easing.ease),
-                                    delay: index * 400,
-                                    repeatReverse: true,
-                                    loop: true
-                                }}
-                                key={index}
-                                style={{ width: 100, height: 100, borderRadius: 50, backgroundColor: "red", position: "absolute" }}
-                            />
-                        )
-                    })
-                }
-            </View>
+            {/* <View style={{ width: "100%", height: 500, alignItems: "center", justifyContent: "center" }}>
+                <AnimatedSwitch />
+            </View> */}
             <SectionList
                 sections={dashboardProducts}
                 keyExtractor={(item, index) => item + index}

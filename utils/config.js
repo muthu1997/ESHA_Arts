@@ -1,5 +1,5 @@
 //API handlers
-export const API = "http://192.168.225.139:3000/v1";
+export const API = "http://192.168.72.139:3000/v1";
 // export const API = "https://project-easha-arts.onrender.com/v1";
 // export const API = "http://ec2-54-238-131-132.ap-northeast-1.compute.amazonaws.com:3000/v1"
 
@@ -19,4 +19,4 @@ export const PTM_MID = "rwHgUV87823862913476";
 export const PTM_MSECRET = "d504a59b26794cdea1e5a93d1c1e5dcb1673258152464";
 
 // Debug
-export const IS_DEBUG = true;
+export const IS_DEBUG = false;

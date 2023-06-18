@@ -18,14 +18,12 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import Icon from "react-native-vector-icons/MaterialCommunityIcons";
 import FIcon from "react-native-vector-icons/Fontisto";
 import * as COLOUR from "./constants/colors";
-import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createStore, combineReducers, applyMiddleware } from 'redux';
 import thunk from "redux-thunk";
 import { Provider } from 'react-redux';
 import createSocketIoMiddleware from 'redux-socket.io';
 import messaging, { firebase } from '@react-native-firebase/messaging';
 import PushNotification from "react-native-push-notification";
-import * as STRINGS from "./constants/strings";
 import { appsflyerSDKInitialise } from './utils/appsflyerConfig';
 import io from 'socket.io-client';
 
@@ -55,6 +53,11 @@ import Chat from "./src/screens/account/chat";
 import Reset from "./src/screens/account/reset";
 import PChatScreen from "./src/screens/chat/chat";
 import PChatDummyScreen from "./src/screens/chat/dummy";
+//Typographyt screen for referance
+import Typography from './src/screens/typographys';
+//Tailwind CSS
+import { TailwindProvider } from 'tailwind-rn';
+import utilities from './tailwind.json';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -66,7 +69,7 @@ export default function App() {
   const configureStore = () => {
     const socket = io.connect("http://ec2-54-238-131-132.ap-northeast-1.compute.amazonaws.com:3001");
     const socketIoMiddleware = createSocketIoMiddleware(socket, "server/")
-    return createStore(rootReducer, applyMiddleware(thunk,socketIoMiddleware));
+    return createStore(rootReducer, applyMiddleware(thunk, socketIoMiddleware));
   }
   useEffect(() => {
     appsflyerSDKInitialise().then(res => {
@@ -134,6 +137,7 @@ export default function App() {
   function HomeFunction() {
     return (
       <Stack.Navigator>
+        <Stack.Screen name="Typography" component={Typography} options={{ headerShown: false }} />
         <Stack.Screen name="Dashboard" component={Dashboard} options={{ headerShown: false }} />
         <Stack.Screen name="ProductDetails" component={ProductDetails} options={{ headerShown: false }} />
         <Stack.Screen name="ProductList" component={ProductList} options={{ headerShown: false }} />
@@ -194,12 +198,13 @@ export default function App() {
     );
   }
 
-  if(renderNothing) {
+  if (renderNothing) {
     return <View />
   }
 
   return (
     <Provider store={configureStore()}>
+      <TailwindProvider utilities={utilities}>
       <NavigationContainer>
         <StatusBar backgroundColor={COLOUR.PRIMARY} />
         <Tab.Navigator>
@@ -210,6 +215,7 @@ export default function App() {
           <Tab.Screen name="Account" component={AccountFunction} options={{ headerShown: false, tabBarActiveTintColor: COLOUR.PRIMARY, tabBarInactiveTintColor: COLOUR.GRAY, tabBarIcon: ({ focused }) => { return <Icon name="account" color={focused ? COLOUR.PRIMARY : COLOUR.GRAY} size={30} /> } }} />
         </Tab.Navigator>
       </NavigationContainer>
+      </TailwindProvider>
     </Provider>
   );
 }
